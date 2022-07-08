@@ -1,0 +1,10 @@
+(library (name ppx_derive_at_runtime_test)
+ (public_name ppx_derive_at_runtime.test)
+ (libraries base expect_test_helpers_core.expect_test_helpers_base
+  ppx_derive_at_runtime_example)
+ (preprocess
+  (pps ppx_jane ppx_derive_at_runtime_locally -derive-from-module
+   -Ppx_derive_at_runtime_example.Comparison ppx_derive_at_runtime_locally
+   -derive-from-module -Ppx_derive_at_runtime_example.Sample
+   ppx_derive_at_runtime_locally -derive-from-module
+   -Ppx_derive_at_runtime_example.Serialization)))

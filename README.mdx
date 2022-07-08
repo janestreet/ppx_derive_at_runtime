@@ -1,0 +1,429 @@
+ppx_derive_at_runtime - create your own deriver without writing ppx code
+========================================================================
+
+Define a new deriver without writing ppx code, just by naming a
+runtime module.
+
+This allows specifying new ppx derivers much more easily than writing
+a ppx by hand. For example, to get `[@@deriving foo]`, you only have to
+specify a module path such as `My_library.Foo`.
+
+The primary tradeoff is runtime cost. The generated code derives each
+value by calling functions in the runtime module, passing in a GADT
+describing the type (tuple, record, variant, etc.). This can incur
+startup cost and can produce less performant code than a hand-written
+ppx.
+
+_Dune users:_ Some of the advice below applies to `jbuild`s, which are
+still used internally at Jane Street. Translate as appropriate for
+`dune` files.
+
+# What ppx derivers do
+
+Use of `[@@deriving]` clauses is ubiquitous in OCaml, especially in
+code based on the `Base` and `Core` libraries. We annotate types with
+clauses such as `[@@deriving compare, equal, hash, quickcheck, sexp]`
+to automatically generate code for comparisons, hash functions, random
+generators, and human-readable serializations. This saves a lot of
+boilerplate, and provides easy to use and uniform behavior for several
+widely used idioms.
+
+## Writing ppx derivers by hand
+
+Sometimes, a project introduces a new idiom that applies to many
+types. Writing a ppx deriver would save a lot of boilerplate at every
+type definition. For example, one might want a `size` operation on
+various datatypes, perhaps to measure space usage over time or to
+collect metrics on relative sizes of different data sets.
+
+To write a ppx deriving a `size` operation, one must first write a
+transformation that reads the AST of a type declaration and produces
+the AST of a corresponding definition for a `size` function. The OCaml
+AST is a large set of type definitions with arcane names, based on
+outdated idioms, and with little documentation. Manipulating code
+snippets in the AST is so cumbersome it is usually done indirectly
+with a custom ppx called "metaquot" (sic). This AST transformation for
+definitions in structures, along with a corresponding one for
+declarations in signatures, must then be registered with `ppxlib`.
+
+All of this is to say that writing a ppx deriver by hand has a high
+barrier to entry, a potentially steep learning curve, and requires a
+fair amount of boilerplate itself.
+
+# What `ppx_derive_at_runtime` does
+
+Using `ppx_derive_at_runtime`, one can write a new ppx deriver much
+more straightforwardly. The main work is writing a runtime library
+that conforms to `Ppx_derive_at_runtime_lib.S`, then registering only
+the name of that module with `ppx_derive_at_runtime`. All AST handling
+and ppx boilerplate is pre-written.
+
+## Writing ppx derivers with `ppx_derive_at_runtime`
+
+To write a ppx deriving a `size` operation, there are two steps.
+
+1. Write a module implementing `'a Size.t` for `size` operations on
+values of type `'a` and satisfying `Ppx_derive_at_runtime_lib.S`.
+
+2. Register the name of that module with `ppx_derive_at_runtime`.
+
+There is no need to deal with `ppxlib` or the AST types at all.
+
+## Run-time implementation
+
+Here is the interface for the `Size` module in `example/size.mli`:
+
+<!-- $MDX file=example/size.mli -->
+```ocaml
+(** Defines how to derive a [size] function using [ppx_derive_at_runtime]. *)
+open! Base
+
+(** The type of [size] operations. *)
+type 'a t = 'a -> int
+
+(** Transforms an ['a t] to a ['b t]. Because [t] is contravariant -- that is, ['a] is an
+    input rather than an output -- we must "unmap" inputs of type ['b] to type ['a] to
+    pass to the original ['a t]. *)
+val unmap : 'a t -> f:('b -> 'a) -> 'b t
+
+(** Size operations for builtin types. When deriving [size], [open] this module. *)
+module Export : sig
+  val size_string : string t
+  val size_list : 'a t -> 'a list t
+end
+
+(** Used as an attribute when deriving size. Types annotated with [[@size Ignore]] are not
+    included in the total. *)
+module Ignore : sig
+  type t = Ignore
+end
+
+(** Derives [t]. Per the definition of [S_with_basic_attribute], the [[@size]] attribute
+    is disallowed on record labels, variant constructors, and polymorphic variant rows by
+    setting their attribute type to [Nothing.t]. *)
+include
+  Ppx_derive_at_runtime_lib.S_with_basic_attribute
+  with type 'a t := 'a t
+   and type _ Derive.Value.attribute = Ignore.t
+```
+
+Here is the implementation for the `Size` module in `example/size.ml`:
+
+<!-- $MDX file=example/size.ml -->
+```ocaml
+open! Base
+
+(** The type of [size] operations. *)
+type 'a t = 'a -> int
+
+(** Transforming a size operation is straightforward function composition. *)
+let unmap t ~f x = t (f x)
+
+(** Strings and lists have natural size operations. *)
+module Export = struct
+  let size_string = String.length
+  let size_list size_elt list = List.sum (module Int) list ~f:size_elt
+end
+
+(** Defining the [Ignore] attribute type. *)
+module Ignore = struct
+  type t = Ignore
+end
+
+(** We provide straightforward combinators on [t] to define how to derive values. *)
+include Ppx_derive_at_runtime_lib.Of_basic (struct
+    type nonrec 'a t = 'a t
+    type _ attribute = Ignore.t
+
+    (** In general, we can derive for covariant, contravariant, or invariant types, so we
+        may need to "map", "unmap", or both. In this case, we only need to "unmap". *)
+    let map_unmap t ~to_:_ ~of_ = unmap t ~f:of_
+
+    (** Unit has a trivial size. Using 1 instead of 0 -- or, for that matter, 2 or any
+        other number -- is an arbitrary choice. *)
+    let unit () = 1
+
+    (** Nothing doesn't have a size. If that makes sense. *)
+    let nothing = Nothing.unreachable_code
+
+    (** Pairs add the sizes of both constituents. We arbitrarily choose not to add a
+        constant for the pair constructor itself. *)
+    let both at bt : (_ * _) t = fun (a, b) -> at a + bt b
+
+    (** Variants just take the size of either part. Again, we arbitrarily choose not to
+        increment for the variant constructor itself. *)
+    let either at bt : (_, _) Either.t t = function
+      | First a -> at a
+      | Second b -> bt b
+    ;;
+
+    (** The [Ignore] attribute means we produce a constant size of zero. *)
+    let with_attribute (type a) (_ : a t) (Ignore : Ignore.t) : a t = Fn.const 0
+
+    (** For (mutually) recursive types, we force the lazy definition on demand. *)
+    let recursive (type a) (at : a t Lazy.t) : a t = fun a -> (Lazy.force at) a
+  end)
+```
+
+Our implementation of `Size` is particularly simple because we are
+able to define it using `Ppx_derive_at_runtime_lib.Of_basic`. This
+functor supports _extensional_ derived values, meaning ones that are
+based only on the runtime contents of a type. There is another example
+of an extensional derivation in `example/comparison.mli` and
+`example/comparison.ml`, which derives `compare` and `equal` values
+similar to `[@@deriving compare, equal]`.
+
+More complex examples include _intensional_ derived values, which may
+depend on details such as the names of record labels or variant
+constructors. To implement these, see the documentation and helpers
+provided in `lib/ppx_derive_at_runtime_lib_intf.ml` and the example in
+`example/serialization.mli` and `example/serialization.ml`, which
+derives `sexp_of` and `of_sexp` values similar to `[@@deriving sexp]`.
+
+## Compile-time registration
+
+After defining a runtime library, the only step left is to register it
+with `ppx_derive_at_runtime_lib`. For `Size`, we do this in
+`for-doc/ppx_derive_at_runtime_for_doc.ml`.
+
+<!-- $MDX file=for-doc/ppx_derive_at_runtime_for_doc.ml -->
+```ocaml
+open! Base
+
+let () =
+  Ppx_derive_at_runtime.register_fully_qualified_runtime_module
+    [%here]
+    "Ppx_derive_at_runtime_example.Size"
+  |> Ppxlib.Deriving.ignore
+;;
+```
+
+Registering a deriver this way should be done in a separate library.
+This library should be declared as a ppx rewriter and should list
+`Size`'s library as a ppx runtime dependency. For example, see
+`for-doc/jbuild`:
+
+<!-- $MDX file=for-doc/jbuild -->
+```
+(library (
+  (name        ppx_derive_at_runtime_for_doc)
+  (public_name ppx_derive_at_runtime.for_doc)
+  (kind        ppx_rewriter)
+  (libraries             (ppx_derive_at_runtime))
+  (ppx_runtime_libraries (ppx_derive_at_runtime_example))
+  (js_of_ocaml ())
+  (no_ocaml_extensions true)))
+```
+
+Code using `[@@deriving size]` should include
+`ppx_derive_at_runtime_for_doc` in the `preprocess` clause of its
+`jbuild` file.
+
+## Alternative compile-time registration
+
+Another way to register derivers is as a one-off inside a
+`preprocess` clause, if a deriver is only meant to be used in one or
+two places. In this case, instead of defining a ppx library, use
+`ppx_derive_at_runtime_locally` in your `preprocess` clause and pass
+it a `-derive-from-module` flag with the module name as an argument.
+In `jbuild` files, arguments must be preceded with a `-`, which
+`ppx_derive_at_runtime_locally` strips off. The
+`ppx_derive_at_runtime_locally` module must be included repeatedly to
+add more arguments. For example, see `test/jbuild`.
+
+<!-- $MDX file=test/jbuild -->
+```
+(library (
+  (name        ppx_derive_at_runtime_test)
+  (public_name ppx_derive_at_runtime.test)
+  (libraries (base expect_test_helpers_base ppx_derive_at_runtime_example))
+  (preprocess (
+    pps (
+      ppx_jane
+      ppx_derive_at_runtime_locally
+      -derive-from-module
+      -Ppx_derive_at_runtime_example.Comparison
+      ppx_derive_at_runtime_locally
+      -derive-from-module
+      -Ppx_derive_at_runtime_example.Sample
+      ppx_derive_at_runtime_locally
+      -derive-from-module
+      -Ppx_derive_at_runtime_example.Serialization)))
+  (no_ocaml_extensions true)))
+```
+
+# Using derivers written with `ppx_derive_at_runtime`
+
+To use a deriver based on a module path, just use the last part of the
+module path, uncapitalized, as the name for `[@@deriving]`. For
+example, here we derive values based on
+`Ppx_derive_at_runtime_example.Size`:
+
+```ocaml
+open Ppx_derive_at_runtime_example
+open Size.Export
+
+module Name = struct
+  type t = { first_name : string; last_name : string } [@@deriving size]
+end
+```
+
+This defines a value named `size` of type `t Size.t`, which happens to
+be defined as `Sexp.t`. We open `Size.Export` so that `size_int` is in
+scope to derive values for the `first_name` and `last_name` labels.
+
+```ocaml
+# Name.size { first_name = "Ada"; last_name = "Lovelace" }
+- : int = 11
+```
+
+## Type names other than `t`
+
+```ocaml
+type partnership = Name.t * Name.t [@@deriving size]
+```
+
+If you define a type other than `t`, the derived value has a suffix
+based on the type name. In this case, the value is `size_partnership`.
+
+```ocaml
+# size_partnership
+    ( { first_name = "Alonzo"; last_name = "Church" }
+    , { first_name = "Alan"; last_name = "Turing" }
+    )
+- : int = 22
+```
+
+## Overriding derived values
+
+You can annotate any type expression with `[@size.custom]`,
+renamed appropriately for your deriver, to override the normally
+derived value. For example, if there is no `size_float` in
+scope, you could write:
+
+```ocaml
+module Name_buffer = struct
+  type t =
+    { first_name : (bytes [@size.custom Bytes.length])
+    ; last_name : (bytes [@size.custom Bytes.length])
+    }
+  [@@deriving size]
+end
+```
+
+The resulting definition uses the provided value instead of deriving one
+for the annotated type expression.
+
+```ocaml
+# Name_buffer.size { first_name = Bytes.create 7; last_name = Bytes.create 5 }
+- : int = 12
+```
+
+## Annotating types
+
+You can also use the `[@size]` attribute, once again renamed
+appropriately for your deriver, to annotate type expressions, record
+labels, variant constructors, and polymorphic variant rows. The
+payload of the attribute is an expression. Runtime modules specify an
+attribute type for each of those four contexts.
+
+```ocaml
+module History = struct
+  type t =
+    { current_title : string
+    ; previous_titles : (string list [@size Ignore])
+    }
+  [@@deriving size]
+end
+```
+
+How these attribute values are used is up to the individual deriver at
+runtime.
+
+```ocaml
+# History.size
+    { current_title = "Snakes on a Plane"
+    ; previous_titles = [ "Pacific Air Flight 121"; "Snakes on a Plane" ]
+    }
+- : int = 17
+```
+
+For `[@@deriving size]`, all contexts other than type expressions
+define attributes as `Nothing.t`. Other derivers may allow attributes
+in these other positions, as needed. See where `Serializations` is
+defined in `example/serialization.mli` and `example/serialization.ml`,
+and where it is used in `test/test_expansion.ml` and
+`test/test_runtime.ml`, for examples of attributes in other positions.
+
+## Deriving values as expressions
+
+You can use the name of your deriver as an extension point to derive
+values from type expressions.
+
+```ocaml
+# [%size: string list] [ "Pacific Air Flight 121"; "Snakes on a Plane" ]
+- : int = 39
+```
+
+## Unhygienic names
+
+Inside the generated code for a type with parameters,
+`ppx_derive_at_runtime` binds variables to the derived values for
+those parameter types. There's generally no reason to refer to them,
+but be aware these names are bound in case they shadow some existing
+name, however unlikely.
+
+```ocaml
+type 'a t =
+  | Node of 'a t list
+  | Leaf of ('a [@size.custom __'a_size__])
+[@@deriving size]
+```
+
+Here, `__'a_size__` refers to the size of type parameter
+`'a`.
+
+```ocaml
+# [%size: string t] (Node [Leaf "let"])
+- : int = 3
+```
+
+For (mutually) recursive type definitions, `ppx_derive_at_runtime`
+binds a lazy version of each derived value. The lazy definitions are
+used to "tie the recursive knot" for the mutual recursion. Again,
+there is little if any need to refer to these names, and attempting to
+force them inside their own definition will either raise or loop
+forever.
+
+```ocaml
+type t =
+  | Zero
+  | Plus_one of (t [@size.custom Lazy.force __lazy_size__])
+[@@deriving size]
+```
+```mdx-error
+Exception:
+("[ppx_derive_at_runtime]: runtime error" //toplevel//:1:1 Lazy.Undefined)
+```
+
+# Directory structure
+
+The `example/` directory contains examples of runtime modules, already
+mentioned above.
+
+The `for-doc/` directory registers the ppx deriver used in this
+document.
+
+The `lib/` directory implements `Ppx_derive_at_runtime_lib`, the
+runtime support that generated code refers to as well as helpers
+for creating new derivers.
+
+The `locally/` directory implements `ppx_derive_at_runtime_locally`,
+the preprocessor that registers modules for deriving based on
+`-derive-from-module` arguments.
+
+The `src/` directory implements the `ppx_derive_at_runtime` ppx
+rewriter itself.
+
+The `test/` directory contains tests of the expansion behavior and
+runtime behavior of `ppx_derive_at_runtime`.

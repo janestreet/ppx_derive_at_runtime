@@ -1,0 +1,5 @@
+(library (name ppx_derive_at_runtime_for_doc)
+ (public_name ppx_derive_at_runtime.for_doc) (kind ppx_rewriter)
+ (libraries ppx_derive_at_runtime)
+ (ppx_runtime_libraries ppx_derive_at_runtime.example)
+ (preprocess (pps ppx_jane)))

@@ -1,0 +1,3 @@
+(library (name ppx_derive_at_runtime_example)
+ (public_name ppx_derive_at_runtime.example)
+ (libraries base ppx_derive_at_runtime_lib) (preprocess (pps ppx_jane)))

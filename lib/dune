@@ -1,0 +1,3 @@
+(library (name ppx_derive_at_runtime_lib)
+ (public_name ppx_derive_at_runtime.lib) (libraries base)
+ (preprocess no_preprocessing))

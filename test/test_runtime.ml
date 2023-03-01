@@ -56,7 +56,7 @@ let test_comparison (type a) ?(normalize = Fn.id) (module T : S0 with type t = a
   let module Int_as_ordering = struct
     type t = int [@@deriving sexp_of]
 
-    let equal = Comparable.lift Ordering.equal ~f:Ordering.of_int
+    let equal a b = Comparable.lift Ordering.equal ~f:Ordering.of_int a b
   end
   in
   quickcheck_m

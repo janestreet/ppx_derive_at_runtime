@@ -10,7 +10,9 @@ let create_m (type a) (module M : Base.Comparable.S with type t = a) =
 ;;
 
 let unmap { equal; compare } ~f =
-  { compare = Comparable.lift compare ~f; equal = Comparable.lift equal ~f }
+  { compare = (fun a b -> Comparable.lift compare ~f a b)
+  ; equal = (fun a b -> Comparable.lift equal ~f a b)
+  }
 ;;
 
 module Export = struct

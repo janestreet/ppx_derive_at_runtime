@@ -99,12 +99,12 @@ module Ignore : sig
 end
 
 (** Derives [t]. Per the definition of [S_with_basic_attribute], the [[@size]] attribute
-    is disallowed on record labels, variant constructors, and polymorphic variant rows by
-    setting their attribute type to [Nothing.t]. *)
+    may be used the same way on types, record labels, variant constructors, and
+    polymorphic variant rows. *)
 include
   Ppx_derive_at_runtime_lib.S_with_basic_attribute
   with type 'a t := 'a t
-   and type _ Derive.Value.attribute = Ignore.t
+   and type _ attribute := Ignore.t
 ```
 
 Here is the implementation for the `Size` module in `example/size.ml`:
@@ -269,7 +269,7 @@ end
 ```
 
 This defines a value named `size` of type `t Size.t`, which happens to
-be defined as `Sexp.t`. We open `Size.Export` so that `size_int` is in
+be defined as `Sexp.t`. We open `Size.Export` so that `size_string` is in
 scope to derive values for the `first_name` and `last_name` labels.
 
 ```ocaml
@@ -298,7 +298,7 @@ based on the type name. In this case, the value is `size_partnership`.
 
 You can annotate any type expression with `[@size.custom]`,
 renamed appropriately for your deriver, to override the normally
-derived value. For example, if there is no `size_float` in
+derived value. For example, if there is no `size_bytes` in
 scope, you could write:
 
 ```ocaml
@@ -348,12 +348,13 @@ runtime.
 - : int = 17
 ```
 
-For `[@@deriving size]`, all contexts other than type expressions
-define attributes as `Nothing.t`. Other derivers may allow attributes
-in these other positions, as needed. See where `Serializations` is
-defined in `example/serialization.mli` and `example/serialization.ml`,
-and where it is used in `test/test_expansion.ml` and
-`test/test_runtime.ml`, for examples of attributes in other positions.
+For `[@@deriving size]`, all contexts use `Ignore.t` as their
+annotation type. Other derivers may use different attribute types for
+type expressions, record labels, variant constructors, and polymorphic
+variant rows, as needed. See where `Serializations` is defined in
+`example/serialization.mli` and `example/serialization.ml`, and where
+it is used in `test/test_expansion.ml` and `test/test_runtime.ml`, for
+examples of attributes in other positions.
 
 ## Deriving values as expressions
 

@@ -30,9 +30,6 @@ end
     for the value with the given name, e.g. [(some value)] becomes [(my-name (some
     value))]. *)
 include
-  Ppx_derive_at_runtime_lib.S
+  Ppx_derive_at_runtime_lib.S_with_basic_attribute
   with type 'a t := 'a t
-  with type _ Derive.Value.attribute = Named.t
-  with type (_, _) Derive.Value.label_attribute = Named.t
-  with type (_, _) Derive.Value.row_attribute = Named.t
-  with type (_, _) Derive.Value.constructor_attribute = Named.t
+  with type _ attribute := Named.t

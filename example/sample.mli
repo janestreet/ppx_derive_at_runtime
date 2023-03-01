@@ -19,4 +19,4 @@ end
 include
   Ppx_derive_at_runtime_lib.S_with_basic_attribute
   with type 'a t := 'a t
-   and type _ Derive.Value.attribute = Nothing.t
+   and type _ attribute := Nothing.t

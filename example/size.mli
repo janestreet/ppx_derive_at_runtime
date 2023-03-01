@@ -22,9 +22,9 @@ module Ignore : sig
 end
 
 (** Derives [t]. Per the definition of [S_with_basic_attribute], the [[@size]] attribute
-    is disallowed on record labels, variant constructors, and polymorphic variant rows by
-    setting their attribute type to [Nothing.t]. *)
+    may be used the same way on types, record labels, variant constructors, and
+    polymorphic variant rows. *)
 include
   Ppx_derive_at_runtime_lib.S_with_basic_attribute
   with type 'a t := 'a t
-   and type _ Derive.Value.attribute = Ignore.t
+   and type _ attribute := Ignore.t

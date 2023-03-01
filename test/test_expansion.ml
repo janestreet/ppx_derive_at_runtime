@@ -1326,7 +1326,7 @@ module Attribute = struct
     | A [@serialization Named "alpha"]
     | B of [ `P [@serialization Named "papa"] | (r[@serialization Named "romeo"]) ]
     | C of
-        { x : (int[@comparison Ignore]) [@serialization Named "xray"]
+        { x : int [@comparison Ignore] [@serialization Named "xray"]
         ; y : (int[@serialization Named "yankee"])
         }
   [@@deriving quickcheck] [@@deriving_inline comparison, sample, serialization]
@@ -1399,13 +1399,8 @@ module Attribute = struct
                                       Node
                                         ( Leaf
                                             { name = "x"
-                                            ; attribute = None
-                                            ; value =
-                                                Ppx_derive_at_runtime_example.Comparison
-                                                .Derive
-                                                .with_attribute
-                                                  comparison_int
-                                                  Ignore
+                                            ; attribute = Some Ignore
+                                            ; value = comparison_int
                                             ; access = (fun (x, _) -> x)
                                             }
                                         , Leaf

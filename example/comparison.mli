@@ -25,11 +25,10 @@ module Ignore : sig
   type t = Ignore
 end
 
-(** Derives [t]. A type can be annotated with [[@comparison Ignore]] to create a [t] that
-    treats all values as equal. The [[@comparison]] attribute is disallowed on record
-    labels, variant constructors, and polymorphic variant rows by setting their attribute
-    type to [Nothing.t]. *)
+(** Derives [t]. Types, record labels, variant constructors, and polymorphic variant rows
+    can be annotated with [[@comparison Ignore]] to create a [t] that treats all values as
+    equal. *)
 include
   Ppx_derive_at_runtime_lib.S_with_basic_attribute
   with type 'a t := 'a t
-   and type _ Derive.Value.attribute = Ignore.t
+   and type _ attribute := Ignore.t

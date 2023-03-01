@@ -157,9 +157,9 @@ module Derive_of_basic (Basic : Basic) = struct
   module Value = struct
     type 'a t = 'a Basic.t
     type 'a attribute = 'a Basic.attribute
-    type (_, _) constructor_attribute = Nothing.t
-    type (_, _) label_attribute = Nothing.t
-    type (_, _) row_attribute = Nothing.t
+    type (_, 'a) constructor_attribute = 'a Basic.attribute
+    type (_, 'a) label_attribute = 'a Basic.attribute
+    type (_, 'a) row_attribute = 'a Basic.attribute
   end
 
   module Types = Types (Value)
@@ -171,6 +171,12 @@ module Derive_of_basic (Basic : Basic) = struct
 
   let recursive _ lazy_t = Basic.recursive lazy_t
   let with_attribute = Basic.with_attribute
+
+  let maybe_with_attribute value option =
+    match option with
+    | None -> value
+    | Some attr -> with_attribute value attr
+  ;;
 
   module Product_acc = struct
     type ('whole, 'tree) t =
@@ -192,7 +198,7 @@ module Derive_of_basic (Basic : Basic) = struct
     let ({ value; access } : _ Product_acc.t) =
       Fold_tuple.fold
         root.tree
-        ~leaf:{ on_leaf = (fun { value; access; _ } -> { value; access }) }
+        ~leaf:{ on_leaf = (fun { value; access; index = _ } -> { value; access }) }
         ~node:{ on_node = Product_acc.both }
     in
     Basic.map_unmap value ~to_:root.convert ~of_:access
@@ -202,7 +208,11 @@ module Derive_of_basic (Basic : Basic) = struct
     let ({ value; access } : _ Product_acc.t) =
       Fold_record.fold
         root.tree
-        ~leaf:{ on_leaf = (fun { value; access; _ } -> { value; access }) }
+        ~leaf:
+          { on_leaf =
+              (fun { value; access; attribute; name = _ } ->
+                 { value = maybe_with_attribute value attribute; access })
+          }
         ~node:{ on_node = Product_acc.both }
     in
     Basic.map_unmap value ~to_:root.convert ~of_:access
@@ -234,12 +244,16 @@ module Derive_of_basic (Basic : Basic) = struct
         ~leaf:
           { on_leaf =
               (fun (type variant cons)
-                ({ args; create; _ } : (variant, cons) Variant.Constructor.t)
+                ({ args; create; attribute; name = _ } :
+                   (variant, cons) Variant.Constructor.t)
                 : (variant, cons) Sum_acc.t ->
-                match args with
-                | Empty -> { value = Basic.unit; create }
-                | Tuple t -> { value = tuple t; create }
-                | Record r -> { value = record r; create })
+                let (value : cons Value.t) =
+                  match args with
+                  | Empty -> Basic.unit
+                  | Tuple t -> tuple t
+                  | Record r -> record r
+                in
+                { value = maybe_with_attribute value attribute; create })
           }
         ~node:{ on_node = Sum_acc.either }
     in
@@ -253,11 +267,12 @@ module Derive_of_basic (Basic : Basic) = struct
         ~leaf:
           { on_leaf =
               (fun (type poly_variant row)
-                ({ arg; create; _ } : (poly_variant, row) Poly_variant.Row.t)
+                ({ arg; create } : (poly_variant, row) Poly_variant.Row.t)
                 : (poly_variant, row) Sum_acc.t ->
                 match arg with
                 | Empty _ -> { value = Basic.unit; create }
-                | Value { value; _ } -> { value; create }
+                | Value { value; attribute; name = _ } ->
+                  { value = maybe_with_attribute value attribute; create }
                 | Inherited value -> { value; create })
           }
         ~node:{ on_node = Sum_acc.either }

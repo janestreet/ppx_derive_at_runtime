@@ -299,13 +299,17 @@ module Definitions = struct
     module Derive : Derive with type 'a Value.t = 'a t
   end
 
-  (** Specialization of [S] for [Of_basic], where only attributes on [core_type] syntax is
-      allowed. *)
-  module type S_with_basic_attribute =
-    S
-    with type (_, _) Derive.Value.constructor_attribute = Nothing.t
-     and type (_, _) Derive.Value.label_attribute = Nothing.t
-     and type (_, _) Derive.Value.row_attribute = Nothing.t
+  (** Specialization of [S] for [Of_basic], where all attributes share a single type. *)
+  module type S_with_basic_attribute = sig
+    type 'a attribute
+
+    include
+      S
+      with type 'a Derive.Value.attribute = 'a attribute
+       and type (_, 'a) Derive.Value.constructor_attribute = 'a attribute
+       and type (_, 'a) Derive.Value.label_attribute = 'a attribute
+       and type (_, 'a) Derive.Value.row_attribute = 'a attribute
+  end
 end
 
 module type Ppx_derive_at_runtime_lib = sig
@@ -319,7 +323,7 @@ module type Ppx_derive_at_runtime_lib = sig
   module Of_basic (Basic : Basic) :
     S_with_basic_attribute
     with type 'a t := 'a Basic.t
-     and type 'a Derive.Value.attribute = 'a Basic.attribute
+     and type 'a attribute := 'a Basic.attribute
 
   (** Defines GADT types and fold helpers for given derived value and attribute types. *)
   module Types (Value : Value) : Types with module Value := Value

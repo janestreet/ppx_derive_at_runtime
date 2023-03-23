@@ -1193,10 +1193,8 @@ module Custom = struct
                  , Leaf
                      { index = 1
                      ; value =
-                         (Comparison.create_m (module Char) : char
-                                                                Ppx_derive_at_runtime_example
-                                                                .Comparison
-                                                                .t)
+                         (Comparison.create_m (module Char)
+                          : char Ppx_derive_at_runtime_example.Comparison.t)
                      ; access = (fun (_, x) -> x)
                      } )
            ; convert = (fun (x0, x1) -> x0, x1)
@@ -1219,9 +1217,8 @@ module Custom = struct
                  , Leaf
                      { index = 1
                      ; value =
-                         (String.to_list "azAZ09_" : char
-                                                       Ppx_derive_at_runtime_example.Sample
-                                                       .t)
+                         (String.to_list "azAZ09_"
+                          : char Ppx_derive_at_runtime_example.Sample.t)
                      ; access = (fun (_, x) -> x)
                      } )
            ; convert = (fun (x0, x1) -> x0, x1)
@@ -1245,10 +1242,8 @@ module Custom = struct
                  , Leaf
                      { index = 1
                      ; value =
-                         (Serialization.create_m (module Char) : char
-                                                                   Ppx_derive_at_runtime_example
-                                                                   .Serialization
-                                                                   .t)
+                         (Serialization.create_m (module Char)
+                          : char Ppx_derive_at_runtime_example.Serialization.t)
                      ; access = (fun (_, x) -> x)
                      } )
            ; convert = (fun (x0, x1) -> x0, x1)

@@ -269,11 +269,11 @@ module Derive_of_basic (Basic : Basic) = struct
               (fun (type poly_variant row)
                 ({ arg; create } : (poly_variant, row) Poly_variant.Row.t)
                 : (poly_variant, row) Sum_acc.t ->
-                match arg with
-                | Empty _ -> { value = Basic.unit; create }
-                | Value { value; attribute; name = _ } ->
-                  { value = maybe_with_attribute value attribute; create }
-                | Inherited value -> { value; create })
+                (match arg with
+                 | Empty _ -> { value = Basic.unit; create }
+                 | Value { value; attribute; name = _ } ->
+                   { value = maybe_with_attribute value attribute; create }
+                 | Inherited value -> { value; create }))
           }
         ~node:{ on_node = Sum_acc.either }
     in

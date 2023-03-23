@@ -157,23 +157,23 @@ module Derive = struct
             { on_leaf =
                 (fun (type part) ({ arg; create = _ } : (_, part) Poly_variant.Row.t)
                                  : (part -> Sexp.t) ->
-                  match arg with
-                  | Empty { name; attribute } ->
-                    let name =
-                      match attribute with
-                      | Some (Named name) -> name
-                      | None -> name
-                    in
-                    fun () -> Atom name
-                  | Value { name; attribute; value } ->
-                    fun x ->
-                      let name =
-                        match attribute with
-                        | Some (Named name) -> name
-                        | None -> name
-                      in
-                      List [ Atom name; value.sexp_of x ]
-                  | Inherited value -> value.sexp_of)
+                  (match arg with
+                   | Empty { name; attribute } ->
+                     let name =
+                       match attribute with
+                       | Some (Named name) -> name
+                       | None -> name
+                     in
+                     fun () -> Atom name
+                   | Value { name; attribute; value } ->
+                     fun x ->
+                       let name =
+                         match attribute with
+                         | Some (Named name) -> name
+                         | None -> name
+                       in
+                       List [ Atom name; value.sexp_of x ]
+                   | Inherited value -> value.sexp_of))
             }
           ~node:
             { on_node =

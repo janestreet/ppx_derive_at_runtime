@@ -30,5 +30,5 @@ end
     equal. *)
 include
   Ppx_derive_at_runtime_lib.S_with_basic_attribute
-  with type 'a t := 'a t
-   and type _ attribute := Ignore.t
+    with type 'a t := 'a t
+     and type _ attribute := Ignore.t

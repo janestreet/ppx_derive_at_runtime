@@ -31,32 +31,32 @@ end
    about the contents of values, not syntax such as field names -- we can derive [t] using
    the [Of_basic] functor. *)
 include Ppx_derive_at_runtime_lib.Of_basic (struct
-    type nonrec 'a t = 'a t
-    type _ attribute = Ignore.t
+  type nonrec 'a t = 'a t
+  type _ attribute = Ignore.t
 
-    let unit = create_m (module Unit)
-    let nothing = create_m (module Nothing)
-    let map_unmap t ~to_:_ ~of_:f = unmap t ~f
+  let unit = create_m (module Unit)
+  let nothing = create_m (module Nothing)
+  let map_unmap t ~to_:_ ~of_:f = unmap t ~f
 
-    let both
-          (type a b)
-          { compare = compare_a; equal = equal_a }
-          { compare = compare_b; equal = equal_b }
-      =
-      { compare = [%compare: a * b]; equal = [%equal: a * b] }
-    ;;
+  let both
+    (type a b)
+    { compare = compare_a; equal = equal_a }
+    { compare = compare_b; equal = equal_b }
+    =
+    { compare = [%compare: a * b]; equal = [%equal: a * b] }
+  ;;
 
-    let either a b =
-      { compare = Either.compare a.compare b.compare; equal = Either.equal a.equal b.equal }
-    ;;
+  let either a b =
+    { compare = Either.compare a.compare b.compare; equal = Either.equal a.equal b.equal }
+  ;;
 
-    let with_attribute _ Ignore.Ignore =
-      { compare = (fun _ _ -> 0); equal = (fun _ _ -> true) }
-    ;;
+  let with_attribute _ Ignore.Ignore =
+    { compare = (fun _ _ -> 0); equal = (fun _ _ -> true) }
+  ;;
 
-    let recursive lazy_t =
-      { compare = (fun x y -> (force lazy_t).compare x y)
-      ; equal = (fun x y -> (force lazy_t).equal x y)
-      }
-    ;;
-  end)
+  let recursive lazy_t =
+    { compare = (fun x y -> (force lazy_t).compare x y)
+    ; equal = (fun x y -> (force lazy_t).equal x y)
+    }
+  ;;
+end)

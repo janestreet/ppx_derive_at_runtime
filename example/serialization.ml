@@ -67,7 +67,7 @@ module Derive = struct
         ~leaf:
           { on_leaf =
               (fun { index = _; value; access } x sexps ->
-                 value.sexp_of (access x) :: sexps)
+                value.sexp_of (access x) :: sexps)
           }
         ~node:{ on_node = (fun left right x sexps -> left x (right x sexps)) }
     ;;
@@ -86,12 +86,12 @@ module Derive = struct
         ~leaf:
           { on_leaf =
               (fun { name; value; attribute; access } x sexps ->
-                 let name =
-                   match attribute with
-                   | Some (Named name) -> name
-                   | None -> name
-                 in
-                 List [ Atom name; value.sexp_of (access x) ] :: sexps)
+                let name =
+                  match attribute with
+                  | Some (Named name) -> name
+                  | None -> name
+                in
+                List [ Atom name; value.sexp_of (access x) ] :: sexps)
           }
         ~node:{ on_node = (fun left right x sexps -> left x (right x sexps)) }
     ;;
@@ -118,9 +118,9 @@ module Derive = struct
           ~leaf:
             { on_leaf =
                 (fun (type part)
-                  ({ name; attribute; args; create = _ } :
-                     (_, part) Variant.Constructor.t)
-                  : (part -> Sexp.t) ->
+                     ({ name; attribute; args; create = _ } :
+                       (_, part) Variant.Constructor.t)
+                   : (part -> Sexp.t) ->
                   let name =
                     match attribute with
                     | Some (Named name) -> name
@@ -136,9 +136,9 @@ module Derive = struct
           ~node:
             { on_node =
                 (fun left right x ->
-                   match x with
-                   | First a -> left a
-                   | Second b -> right b)
+                  match x with
+                  | First a -> left a
+                  | Second b -> right b)
             }
       in
       fun x -> sexp_of (root.convert x)
@@ -156,7 +156,7 @@ module Derive = struct
           ~leaf:
             { on_leaf =
                 (fun (type part) ({ arg; create = _ } : (_, part) Poly_variant.Row.t)
-                                 : (part -> Sexp.t) ->
+                   : (part -> Sexp.t) ->
                   (match arg with
                    | Empty { name; attribute } ->
                      let name =
@@ -178,9 +178,9 @@ module Derive = struct
           ~node:
             { on_node =
                 (fun left right x ->
-                   match x with
-                   | First a -> left a
-                   | Second b -> right b)
+                  match x with
+                  | First a -> left a
+                  | Second b -> right b)
             }
       in
       fun x -> sexp_of (root.convert x)
@@ -222,9 +222,9 @@ module Derive = struct
           ~leaf:
             { on_leaf =
                 (fun { index = _; value; access = _ } sexps ->
-                   match sexps with
-                   | [] -> raise_s [%message "bad sexp"]
-                   | sexp :: sexps -> value.of_sexp sexp, sexps)
+                  match sexps with
+                  | [] -> raise_s [%message "bad sexp"]
+                  | sexp :: sexps -> value.of_sexp sexp, sexps)
             }
           ~node:{ on_node = on_product_node }
       in
@@ -238,15 +238,15 @@ module Derive = struct
           ~leaf:
             { on_leaf =
                 (fun { name; attribute; value; access = _ } sexps ->
-                   let name =
-                     match attribute with
-                     | Some (Named name) -> name
-                     | None -> name
-                   in
-                   match sexps with
-                   | List [ Atom atom; sexp ] :: sexps when String.equal atom name ->
-                     value.of_sexp sexp, sexps
-                   | _ -> raise_s [%message "bad sexp"])
+                  let name =
+                    match attribute with
+                    | Some (Named name) -> name
+                    | None -> name
+                  in
+                  match sexps with
+                  | List [ Atom atom; sexp ] :: sexps when String.equal atom name ->
+                    value.of_sexp sexp, sexps
+                  | _ -> raise_s [%message "bad sexp"])
             }
           ~node:{ on_node = on_product_node }
       in
@@ -266,8 +266,8 @@ module Derive = struct
        them outside the folds. *)
 
     let on_variant_leaf
-          (type a b)
-          ({ name; attribute; args; create } : (a, b) Variant.Constructor.t)
+      (type a b)
+      ({ name; attribute; args; create } : (a, b) Variant.Constructor.t)
       : Sexp.t -> a option
       =
       let name =
@@ -278,20 +278,20 @@ module Derive = struct
       match args with
       | Empty ->
         (function
-          | Atom atom when String.equal atom name -> Some (create ())
-          | _ -> None)
+         | Atom atom when String.equal atom name -> Some (create ())
+         | _ -> None)
       | Tuple t ->
         let of_sexp = tuple t in
         (function
-          | List (Atom atom :: sexps) when String.equal atom name ->
-            Some (create (of_sexp (List sexps)))
-          | _ -> None)
+         | List (Atom atom :: sexps) when String.equal atom name ->
+           Some (create (of_sexp (List sexps)))
+         | _ -> None)
       | Record r ->
         let of_sexp = record r in
         (function
-          | List (Atom atom :: sexps) when String.equal atom name ->
-            Some (create (of_sexp (List sexps)))
-          | _ -> None)
+         | List (Atom atom :: sexps) when String.equal atom name ->
+           Some (create (of_sexp (List sexps)))
+         | _ -> None)
     ;;
 
     let on_poly_variant_leaf (type a b) ({ arg; create } : (a, b) Poly_variant.Row.t)
@@ -305,8 +305,8 @@ module Derive = struct
           | None -> name
         in
         (function
-          | Atom atom when String.equal atom name -> Some (create ())
-          | _ -> None)
+         | Atom atom when String.equal atom name -> Some (create ())
+         | _ -> None)
       | Value { name; attribute; value } ->
         let name =
           match attribute with
@@ -314,9 +314,9 @@ module Derive = struct
           | None -> name
         in
         (function
-          | List [ Atom atom; sexp ] when String.equal atom name ->
-            Some (create (value.of_sexp sexp))
-          | _ -> None)
+         | List [ Atom atom; sexp ] when String.equal atom name ->
+           Some (create (value.of_sexp sexp))
+         | _ -> None)
       | Inherited value ->
         fun sexp -> Option.try_with (fun () -> create (value.of_sexp sexp))
     ;;
@@ -374,8 +374,8 @@ module Derive = struct
     { sexp_of = (fun x -> List [ Atom name; t.sexp_of x ])
     ; of_sexp =
         (function
-          | List [ Atom atom; sexp ] when String.equal atom name -> t.of_sexp sexp
-          | _ -> raise_s [%message "bad sexp"])
+         | List [ Atom atom; sexp ] when String.equal atom name -> t.of_sexp sexp
+         | _ -> raise_s [%message "bad sexp"])
     }
   ;;
 end

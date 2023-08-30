@@ -6,14 +6,14 @@ include Ppx_derive_at_runtime_lib_intf.Definitions
    satisfy. I believe this is because getting the module aliases "just right" to refer to
    concrete, functor-generated types from multiple places is difficult. *)
 module Type (Spec : sig
-    type ('a, 'b) leaf
-    type (!_, !_) node
-    type ('a, 'b) conversion
-  end) :
+  type ('a, 'b) leaf
+  type (!_, !_) node
+  type ('a, 'b) conversion
+end) :
   Type
-  with type ('a, 'b) leaf := ('a, 'b) Spec.leaf
-  with type ('a, 'b) node := ('a, 'b) Spec.node
-  with type ('a, 'b) conversion := ('a, 'b) Spec.conversion = struct
+    with type ('a, 'b) leaf := ('a, 'b) Spec.leaf
+    with type ('a, 'b) node := ('a, 'b) Spec.node
+    with type ('a, 'b) conversion := ('a, 'b) Spec.conversion = struct
   open Spec
 
   module Tree = struct
@@ -39,7 +39,7 @@ module Type (Spec : sig
     type 'a node_callback =
       { on_node :
           'left 'right.
-            ('a, 'left) Acc.t -> ('a, 'right) Acc.t -> ('a, ('left, 'right) node) Acc.t
+          ('a, 'left) Acc.t -> ('a, 'right) Acc.t -> ('a, ('left, 'right) node) Acc.t
       }
     [@@unboxed]
 
@@ -73,10 +73,10 @@ module Types (Value : Value) = struct
     end
 
     include Type (struct
-        type ('a, 'b) leaf = ('a, 'b) Part.t
-        type ('a, 'b) node = 'a * 'b
-        type ('tuple, 'pairs) conversion = 'pairs -> 'tuple
-      end)
+      type ('a, 'b) leaf = ('a, 'b) Part.t
+      type ('a, 'b) node = 'a * 'b
+      type ('tuple, 'pairs) conversion = 'pairs -> 'tuple
+    end)
   end
 
   module Record = struct
@@ -90,10 +90,10 @@ module Types (Value : Value) = struct
     end
 
     include Type (struct
-        type ('a, 'b) leaf = ('a, 'b) Label.t
-        type ('a, 'b) node = 'a * 'b
-        type ('record, 'pairs) conversion = 'pairs -> 'record
-      end)
+      type ('a, 'b) leaf = ('a, 'b) Label.t
+      type ('a, 'b) node = 'a * 'b
+      type ('record, 'pairs) conversion = 'pairs -> 'record
+    end)
   end
 
   module Variant = struct
@@ -114,10 +114,10 @@ module Types (Value : Value) = struct
     end
 
     include Type (struct
-        type ('a, 'b) leaf = ('a, 'b) Constructor.t
-        type ('a, 'b) node = ('a, 'b) Either.t
-        type ('variant, 'eithers) conversion = 'variant -> 'eithers
-      end)
+      type ('a, 'b) leaf = ('a, 'b) Constructor.t
+      type ('a, 'b) node = ('a, 'b) Either.t
+      type ('variant, 'eithers) conversion = 'variant -> 'eithers
+    end)
   end
 
   module Poly_variant = struct
@@ -145,10 +145,10 @@ module Types (Value : Value) = struct
     end
 
     include Type (struct
-        type ('a, 'b) leaf = ('a, 'b) Row.t
-        type ('a, 'b) node = ('a, 'b) Either.t
-        type ('poly_variant, 'eithers) conversion = 'poly_variant -> 'eithers
-      end)
+      type ('a, 'b) leaf = ('a, 'b) Row.t
+      type ('a, 'b) node = ('a, 'b) Either.t
+      type ('poly_variant, 'eithers) conversion = 'poly_variant -> 'eithers
+    end)
   end
 end
 
@@ -211,7 +211,7 @@ module Derive_of_basic (Basic : Basic) = struct
         ~leaf:
           { on_leaf =
               (fun { value; access; attribute; name = _ } ->
-                 { value = maybe_with_attribute value attribute; access })
+                { value = maybe_with_attribute value attribute; access })
           }
         ~node:{ on_node = Product_acc.both }
     in
@@ -228,8 +228,8 @@ module Derive_of_basic (Basic : Basic) = struct
       { value = Basic.either left.value right.value
       ; create =
           (function
-            | First x -> left.create x
-            | Second y -> right.create y)
+           | First x -> left.create x
+           | Second y -> right.create y)
       }
     ;;
   end
@@ -244,9 +244,9 @@ module Derive_of_basic (Basic : Basic) = struct
         ~leaf:
           { on_leaf =
               (fun (type variant cons)
-                ({ args; create; attribute; name = _ } :
-                   (variant, cons) Variant.Constructor.t)
-                : (variant, cons) Sum_acc.t ->
+                   ({ args; create; attribute; name = _ } :
+                     (variant, cons) Variant.Constructor.t)
+                 : (variant, cons) Sum_acc.t ->
                 let (value : cons Value.t) =
                   match args with
                   | Empty -> Basic.unit
@@ -267,8 +267,8 @@ module Derive_of_basic (Basic : Basic) = struct
         ~leaf:
           { on_leaf =
               (fun (type poly_variant row)
-                ({ arg; create } : (poly_variant, row) Poly_variant.Row.t)
-                : (poly_variant, row) Sum_acc.t ->
+                   ({ arg; create } : (poly_variant, row) Poly_variant.Row.t)
+                 : (poly_variant, row) Sum_acc.t ->
                 (match arg with
                  | Empty _ -> { value = Basic.unit; create }
                  | Value { value; attribute; name = _ } ->

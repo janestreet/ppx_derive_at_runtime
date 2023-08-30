@@ -176,9 +176,9 @@ module Type = struct
                          } ) )
            ; convert =
                (function
-                 | `A x -> First x
-                 | `B x -> Second (First x)
-                 | `C x -> Second (Second x))
+                | `A x -> First x
+                | `B x -> Second (First x)
+                | `C x -> Second (Second x))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -279,9 +279,9 @@ module Type = struct
                          } ) )
            ; convert =
                (function
-                 | `A x -> First x
-                 | `B x -> Second (First x)
-                 | `C x -> Second (Second x))
+                | `A x -> First x
+                | `B x -> Second (First x)
+                | `C x -> Second (Second x))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -385,9 +385,9 @@ module Type = struct
                          } ) )
            ; convert =
                (function
-                 | `A x -> First x
-                 | `B x -> Second (First x)
-                 | `C x -> Second (Second x))
+                | `A x -> First x
+                | `B x -> Second (First x)
+                | `C x -> Second (Second x))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -426,8 +426,8 @@ module Inherit = struct
                      } )
            ; convert =
                (function
-                 | #Type.t as x -> First x
-                 | `D -> Second ())
+                | #Type.t as x -> First x
+                | `D -> Second ())
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -454,8 +454,8 @@ module Inherit = struct
                      } )
            ; convert =
                (function
-                 | #Type.t as x -> First x
-                 | `D -> Second ())
+                | #Type.t as x -> First x
+                | `D -> Second ())
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -484,8 +484,8 @@ module Inherit = struct
                      } )
            ; convert =
                (function
-                 | #Type.t as x -> First x
-                 | `D -> Second ())
+                | #Type.t as x -> First x
+                | `D -> Second ())
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -703,11 +703,11 @@ module Variant = struct
                          } ) )
            ; convert =
                (function
-                 | A -> First ()
-                 | B (__value_0__, __value_1__, __value_2__) ->
-                   Second (First (__value_0__, __value_1__, __value_2__))
-                 | C { x = __field_x__; y = __field_y__; z = __field_z__ } ->
-                   Second (Second (__field_x__, __field_y__, __field_z__)))
+                | A -> First ()
+                | B (__value_0__, __value_1__, __value_2__) ->
+                  Second (First (__value_0__, __value_1__, __value_2__))
+                | C { x = __field_x__; y = __field_y__; z = __field_z__ } ->
+                  Second (Second (__field_x__, __field_y__, __field_z__)))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -791,11 +791,11 @@ module Variant = struct
                          } ) )
            ; convert =
                (function
-                 | A -> First ()
-                 | B (__value_0__, __value_1__, __value_2__) ->
-                   Second (First (__value_0__, __value_1__, __value_2__))
-                 | C { x = __field_x__; y = __field_y__; z = __field_z__ } ->
-                   Second (Second (__field_x__, __field_y__, __field_z__)))
+                | A -> First ()
+                | B (__value_0__, __value_1__, __value_2__) ->
+                  Second (First (__value_0__, __value_1__, __value_2__))
+                | C { x = __field_x__; y = __field_y__; z = __field_z__ } ->
+                  Second (Second (__field_x__, __field_y__, __field_z__)))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -879,11 +879,11 @@ module Variant = struct
                          } ) )
            ; convert =
                (function
-                 | A -> First ()
-                 | B (__value_0__, __value_1__, __value_2__) ->
-                   Second (First (__value_0__, __value_1__, __value_2__))
-                 | C { x = __field_x__; y = __field_y__; z = __field_z__ } ->
-                   Second (Second (__field_x__, __field_y__, __field_z__)))
+                | A -> First ()
+                | B (__value_0__, __value_1__, __value_2__) ->
+                  Second (First (__value_0__, __value_1__, __value_2__))
+                | C { x = __field_x__; y = __field_y__; z = __field_z__ } ->
+                  Second (Second (__field_x__, __field_y__, __field_z__)))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -931,7 +931,6 @@ module Empty = struct
   let _ = serialization
 
   [@@@end]
-
 
   let quickcheck_generator =
     Base_quickcheck.Generator.map Base_quickcheck.Generator.unit ~f:(fun _ ->
@@ -1012,8 +1011,8 @@ module Recursive = struct
                           } )
                 ; convert =
                     (function
-                      | Leaf __value_0__ -> First __value_0__
-                      | Node __value_0__ -> Second __value_0__)
+                     | Leaf __value_0__ -> First __value_0__
+                     | Node __value_0__ -> Second __value_0__)
                 })
          with
          | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__)
@@ -1082,8 +1081,8 @@ module Recursive = struct
                           } )
                 ; convert =
                     (function
-                      | Leaf __value_0__ -> First __value_0__
-                      | Node __value_0__ -> Second __value_0__)
+                     | Leaf __value_0__ -> First __value_0__
+                     | Node __value_0__ -> Second __value_0__)
                 })
          with
          | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__)
@@ -1154,8 +1153,8 @@ module Recursive = struct
                           } )
                 ; convert =
                     (function
-                      | Leaf __value_0__ -> First __value_0__
-                      | Node __value_0__ -> Second __value_0__)
+                     | Leaf __value_0__ -> First __value_0__
+                     | Node __value_0__ -> Second __value_0__)
                 })
          with
          | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__)
@@ -1174,9 +1173,9 @@ module Custom = struct
   type t =
     int
     * (char
-       [@comparison.custom Comparison.create_m (module Char)]
-       [@sample.custom String.to_list "azAZ09_"]
-       [@serialization.custom Serialization.create_m (module Char)])
+      [@comparison.custom Comparison.create_m (module Char)]
+      [@sample.custom String.to_list "azAZ09_"]
+      [@serialization.custom Serialization.create_m (module Char)])
   [@@deriving quickcheck] [@@deriving_inline comparison, sample, serialization]
 
   let _ = fun (_ : t) -> ()
@@ -1194,7 +1193,7 @@ module Custom = struct
                      { index = 1
                      ; value =
                          (Comparison.create_m (module Char)
-                          : char Ppx_derive_at_runtime_example.Comparison.t)
+                           : char Ppx_derive_at_runtime_example.Comparison.t)
                      ; access = (fun (_, x) -> x)
                      } )
            ; convert = (fun (x0, x1) -> x0, x1)
@@ -1218,7 +1217,7 @@ module Custom = struct
                      { index = 1
                      ; value =
                          (String.to_list "azAZ09_"
-                          : char Ppx_derive_at_runtime_example.Sample.t)
+                           : char Ppx_derive_at_runtime_example.Sample.t)
                      ; access = (fun (_, x) -> x)
                      } )
            ; convert = (fun (x0, x1) -> x0, x1)
@@ -1243,7 +1242,7 @@ module Custom = struct
                      { index = 1
                      ; value =
                          (Serialization.create_m (module Char)
-                          : char Ppx_derive_at_runtime_example.Serialization.t)
+                           : char Ppx_derive_at_runtime_example.Serialization.t)
                      ; access = (fun (_, x) -> x)
                      } )
            ; convert = (fun (x0, x1) -> x0, x1)
@@ -1260,10 +1259,10 @@ end
 module Extension = struct
   type t =
     (char
-     [@comparison.custom Comparison.unmap [%comparison: int] ~f:Char.to_int]
-     [@serialization.custom
-       Serialization.map_unmap [%serialization: int] ~to_:Char.of_int_exn ~of_:Char.to_int]
-     [@sample.custom List.filter_map [%sample: int] ~f:Char.of_int])
+    [@comparison.custom Comparison.unmap [%comparison: int] ~f:Char.to_int]
+    [@serialization.custom
+      Serialization.map_unmap [%serialization: int] ~to_:Char.of_int_exn ~of_:Char.to_int]
+    [@sample.custom List.filter_map [%sample: int] ~f:Char.of_int])
   [@@deriving quickcheck] [@@deriving_inline comparison, sample, serialization]
 
   let _ = fun (_ : t) -> ()
@@ -1275,7 +1274,7 @@ module Extension = struct
       (Comparison.unmap
          (comparison_int : int Ppx_derive_at_runtime_example.Comparison.t)
          ~f:Char.to_int
-       : char Ppx_derive_at_runtime_example.Comparison.t)
+        : char Ppx_derive_at_runtime_example.Comparison.t)
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
   ;;
@@ -1289,7 +1288,7 @@ module Extension = struct
       (List.filter_map
          (sample_int : int Ppx_derive_at_runtime_example.Sample.t)
          ~f:Char.of_int
-       : char Ppx_derive_at_runtime_example.Sample.t)
+        : char Ppx_derive_at_runtime_example.Sample.t)
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
   ;;
@@ -1304,7 +1303,7 @@ module Extension = struct
          (serialization_int : int Ppx_derive_at_runtime_example.Serialization.t)
          ~to_:Char.of_int_exn
          ~of_:Char.to_int
-       : char Ppx_derive_at_runtime_example.Serialization.t)
+        : char Ppx_derive_at_runtime_example.Serialization.t)
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
   ;;
@@ -1371,12 +1370,12 @@ module Attribute = struct
                                                            { arg = Inherited comparison_r
                                                            ; create =
                                                                (fun x ->
-                                                                  (x : r :> [ `P | r ]))
+                                                                 (x : r :> [ `P | r ]))
                                                            } )
                                                  ; convert =
                                                      (function
-                                                       | `P -> First ()
-                                                       | #r as x -> Second x)
+                                                      | `P -> First ()
+                                                      | #r as x -> Second x)
                                                  })
                                         ; access = (fun x -> x)
                                         }
@@ -1410,10 +1409,10 @@ module Attribute = struct
                          } ) )
            ; convert =
                (function
-                 | A -> First ()
-                 | B __value_0__ -> Second (First __value_0__)
-                 | C { x = __field_x__; y = __field_y__ } ->
-                   Second (Second (__field_x__, __field_y__)))
+                | A -> First ()
+                | B __value_0__ -> Second (First __value_0__)
+                | C { x = __field_x__; y = __field_y__ } ->
+                  Second (Second (__field_x__, __field_y__)))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -1463,12 +1462,12 @@ module Attribute = struct
                                                            { arg = Inherited sample_r
                                                            ; create =
                                                                (fun x ->
-                                                                  (x : r :> [ `P | r ]))
+                                                                 (x : r :> [ `P | r ]))
                                                            } )
                                                  ; convert =
                                                      (function
-                                                       | `P -> First ()
-                                                       | #r as x -> Second x)
+                                                      | `P -> First ()
+                                                      | #r as x -> Second x)
                                                  })
                                         ; access = (fun x -> x)
                                         }
@@ -1502,10 +1501,10 @@ module Attribute = struct
                          } ) )
            ; convert =
                (function
-                 | A -> First ()
-                 | B __value_0__ -> Second (First __value_0__)
-                 | C { x = __field_x__; y = __field_y__ } ->
-                   Second (Second (__field_x__, __field_y__)))
+                | A -> First ()
+                | B __value_0__ -> Second (First __value_0__)
+                | C { x = __field_x__; y = __field_y__ } ->
+                  Second (Second (__field_x__, __field_y__)))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -1564,12 +1563,12 @@ module Attribute = struct
                                                                     (Named "romeo"))
                                                            ; create =
                                                                (fun x ->
-                                                                  (x : r :> [ `P | r ]))
+                                                                 (x : r :> [ `P | r ]))
                                                            } )
                                                  ; convert =
                                                      (function
-                                                       | `P -> First ()
-                                                       | #r as x -> Second x)
+                                                      | `P -> First ()
+                                                      | #r as x -> Second x)
                                                  })
                                         ; access = (fun x -> x)
                                         }
@@ -1609,10 +1608,10 @@ module Attribute = struct
                          } ) )
            ; convert =
                (function
-                 | A -> First ()
-                 | B __value_0__ -> Second (First __value_0__)
-                 | C { x = __field_x__; y = __field_y__ } ->
-                   Second (Second (__field_x__, __field_y__)))
+                | A -> First ()
+                | B __value_0__ -> Second (First __value_0__)
+                | C { x = __field_x__; y = __field_y__ } ->
+                  Second (Second (__field_x__, __field_y__)))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__

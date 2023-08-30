@@ -17,14 +17,14 @@ module Config = struct
     { module_id : Longident.t (** runtime module name **)
     ; name : string (** name used in [@@deriving] and derived value names *)
     ; attribute_custom : (core_type, expression) Attribute.t
-    (** [@foo.custom] attribute **)
+        (** [@foo.custom] attribute **)
     ; attribute_core_type : (core_type, expression) Attribute.t (** [@foo] on types **)
     ; attribute_clause : (constructor_declaration, expression) Attribute.t
-    (** @foo on variant clauses *)
+        (** @foo on variant clauses *)
     ; attribute_field : (label_declaration, expression) Attribute.t
-    (** [@foo] on record fields *)
+        (** [@foo] on record fields *)
     ; attribute_row : (row_field, expression) Attribute.t
-    (** [@foo] on polymorphic variant rows *)
+        (** [@foo] on polymorphic variant rows *)
     }
 
   (** Parses a module path, with a useful error message. *)
@@ -384,10 +384,10 @@ module Structure = struct
           tree
           ~one:(expand_poly_variant_choice ~config)
           ~two:(fun lefts rights ->
-            List.concat
-              [ List.map lefts ~f:(fun (pat, expr) -> pat, [%expr First [%e expr]])
-              ; List.map rights ~f:(fun (pat, expr) -> pat, [%expr Second [%e expr]])
-              ])
+          List.concat
+            [ List.map lefts ~f:(fun (pat, expr) -> pat, [%expr First [%e expr]])
+            ; List.map rights ~f:(fun (pat, expr) -> pat, [%expr Second [%e expr]])
+            ])
         |> List.map ~f:(fun (lhs, rhs) -> case ~lhs ~guard:None ~rhs)
         |> pexp_function ~loc
       in

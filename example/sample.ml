@@ -11,22 +11,22 @@ module Export = struct
 end
 
 include Ppx_derive_at_runtime_lib.Of_basic (struct
-    type nonrec 'a t = 'a t
-    type _ attribute = Nothing.t
+  type nonrec 'a t = 'a t
+  type _ attribute = Nothing.t
 
-    let map_unmap t ~to_:f ~of_:_ = List.map t ~f
-    let unit = [ () ]
-    let nothing = []
+  let map_unmap t ~to_:f ~of_:_ = List.map t ~f
+  let unit = [ () ]
+  let nothing = []
 
-    let both a b =
-      let a = Array.of_list a in
-      let b = Array.of_list b in
-      let m = Array.length a in
-      let n = Array.length b in
-      List.init (Int.max m n) ~f:(fun i -> a.(i % m), b.(i % n))
-    ;;
+  let both a b =
+    let a = Array.of_list a in
+    let b = Array.of_list b in
+    let m = Array.length a in
+    let n = Array.length b in
+    List.init (Int.max m n) ~f:(fun i -> a.(i % m), b.(i % n))
+  ;;
 
-    let either a b = List.concat [ List.map a ~f:Either.first; List.map b ~f:Either.second ]
-    let recursive _ = []
-    let with_attribute _ nothing = Nothing.unreachable_code nothing
-  end)
+  let either a b = List.concat [ List.map a ~f:Either.first; List.map b ~f:Either.second ]
+  let recursive _ = []
+  let with_attribute _ nothing = Nothing.unreachable_code nothing
+end)

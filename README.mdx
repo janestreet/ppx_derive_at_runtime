@@ -212,7 +212,7 @@ This library should be declared as a ppx rewriter and should list
   (libraries             (ppx_derive_at_runtime))
   (ppx_runtime_libraries (ppx_derive_at_runtime_example))
   (js_of_ocaml ())
-  (no_ocaml_extensions true)))
+  (only_erasable_extensions true)))
 ```
 
 Code using `[@@deriving size]` should include
@@ -249,7 +249,7 @@ add more arguments. For example, see `test/jbuild`.
       ppx_derive_at_runtime_locally
       -derive-from-module
       -Ppx_derive_at_runtime_example.Serialization)))
-  (no_ocaml_extensions true)))
+  (only_erasable_extensions true)))
 ```
 
 # Using derivers written with `ppx_derive_at_runtime`

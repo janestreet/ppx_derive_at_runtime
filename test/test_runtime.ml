@@ -127,7 +127,8 @@ let%expect_test _ =
       (1  1)))
     (C (-1 -1 -1))
     (C (0 0 0))
-    (C (1 1 1)) |}]
+    (C (1 1 1))
+    |}]
 ;;
 
 module Inherit = Test_expansion.Inherit
@@ -152,7 +153,8 @@ let%expect_test _ =
     (C (-1 -1 -1))
     (C (0 0 0))
     (C (1 1 1))
-    D |}]
+    D
+    |}]
 ;;
 
 module Record = Test_expansion.Record
@@ -169,7 +171,8 @@ let%expect_test _ =
      (z 0))
     ((x 1)
      (y 1)
-     (z 1)) |}]
+     (z 1))
+    |}]
 ;;
 
 module Variant = Test_expansion.Variant
@@ -193,7 +196,8 @@ let%expect_test _ =
     (C
       (x 1)
       (y 1)
-      (z 1)) |}]
+      (z 1))
+    |}]
 ;;
 
 module Empty = Test_expansion.Empty
@@ -210,21 +214,24 @@ let%expect_test _ =
   [%expect {|
     (Leaf -1)
     (Leaf 0)
-    (Leaf 1) |}]
+    (Leaf 1)
+    |}]
 ;;
 
 module Custom = Test_expansion.Custom
 
 let%expect_test _ =
   test0 (module Custom);
-  [%expect {|
+  [%expect
+    {|
     (-1 a)
     (0 z)
     (1 A)
     (-1 Z)
     (0 0)
     (1 9)
-    (-1 _) |}]
+    (-1 _)
+    |}]
 ;;
 
 module Extension = Test_expansion.Extension
@@ -233,7 +240,8 @@ let%expect_test _ =
   test0 (module Extension);
   [%expect {|
     0
-    1 |}]
+    1
+    |}]
 ;;
 
 module Attribute = Test_expansion.Attribute
@@ -254,5 +262,6 @@ let%expect_test _ =
     (B (romeo Q))
     (C (xray -1) (y (yankee -1)))
     (C (xray 0) (y (yankee 0)))
-    (C (xray 1) (y (yankee 1))) |}]
+    (C (xray 1) (y (yankee 1)))
+    |}]
 ;;

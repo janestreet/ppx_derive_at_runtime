@@ -92,19 +92,13 @@ module Export : sig
   val size_list : 'a t -> 'a list t
 end
 
-(** Used as an attribute when deriving size. Types annotated with [[@size Ignore]] are not
-    included in the total. *)
-module Ignore : sig
-  type t = Ignore
-end
-
-(** Derives [t]. Per the definition of [S_with_basic_attribute], the [[@size]] attribute
-    may be used the same way on types, record labels, variant constructors, and
-    polymorphic variant rows. *)
+(** Derives [t], with [[@size f]] to modify the size with [f] and [@size.override n] to
+    produce the constant size [n]. *)
 include
   Ppx_derive_at_runtime_lib.S_with_basic_attribute
   with type 'a t := 'a t
-   and type _ attribute := Ignore.t
+   and type _ attribute := int -> int
+   and type _ override := int
 ```
 
 Here is the implementation for the `Size` module in `example/size.ml`:
@@ -125,15 +119,11 @@ module Export = struct
   let size_list size_elt list = List.sum (module Int) list ~f:size_elt
 end
 
-(** Defining the [Ignore] attribute type. *)
-module Ignore = struct
-  type t = Ignore
-end
-
 (** We provide straightforward combinators on [t] to define how to derive values. *)
 include Ppx_derive_at_runtime_lib.Of_basic (struct
     type nonrec 'a t = 'a t
-    type _ attribute = Ignore.t
+    type _ attribute = int -> int
+    type _ override = int
 
     (** In general, we can derive for covariant, contravariant, or invariant types, so we
         may need to "map", "unmap", or both. In this case, we only need to "unmap". *)
@@ -157,8 +147,11 @@ include Ppx_derive_at_runtime_lib.Of_basic (struct
       | Second b -> bt b
     ;;
 
-    (** The [Ignore] attribute means we produce a constant size of zero. *)
-    let with_attribute (type a) (_ : a t) (Ignore : Ignore.t) : a t = Fn.const 0
+    (** [[@size f]] applies [f] to the computed size. *)
+    let with_attribute t a x = a (t x)
+
+    (** [[@size.override n]] produces [n] as the size. *)
+    let override n _ = n
 
     (** For (mutually) recursive types, we force the lazy definition on demand. *)
     let recursive (type a) (at : a t Lazy.t) : a t = fun a -> (Lazy.force at) a
@@ -209,10 +202,10 @@ This library should be declared as a ppx rewriter and should list
   (name        ppx_derive_at_runtime_for_doc)
   (public_name ppx_derive_at_runtime.for_doc)
   (kind        ppx_rewriter)
-  (libraries             (ppx_derive_at_runtime))
+  (libraries (ppx_derive_at_runtime ppxlib))
   (ppx_runtime_libraries (ppx_derive_at_runtime_example))
   (js_of_ocaml ())
-  (only_erasable_extensions true)))
+  (extension_universe upstream_compatible)))
 ```
 
 Code using `[@@deriving size]` should include
@@ -225,11 +218,9 @@ Another way to register derivers is as a one-off inside a
 `preprocess` clause, if a deriver is only meant to be used in one or
 two places. In this case, instead of defining a ppx library, use
 `ppx_derive_at_runtime_locally` in your `preprocess` clause and pass
-it a `-derive-from-module` flag with the module name as an argument.
-In `jbuild` files, arguments must be preceded with a `-`, which
-`ppx_derive_at_runtime_locally` strips off. The
-`ppx_derive_at_runtime_locally` module must be included repeatedly to
-add more arguments. For example, see `test/jbuild`.
+it a `-derive-from-module=` flag with the module name following `=`.
+The `ppx_derive_at_runtime_locally` module must be included repeatedly
+to add more arguments. For example, see `test/jbuild`.
 
 <!-- $MDX file=test/jbuild -->
 ```
@@ -241,15 +232,12 @@ add more arguments. For example, see `test/jbuild`.
     pps (
       ppx_jane
       ppx_derive_at_runtime_locally
-      -derive-from-module
-      -Ppx_derive_at_runtime_example.Comparison
+      -derive-from-module=Ppx_derive_at_runtime_example.Comparison
       ppx_derive_at_runtime_locally
-      -derive-from-module
-      -Ppx_derive_at_runtime_example.Sample
+      -derive-from-module=Ppx_derive_at_runtime_example.Sample
       ppx_derive_at_runtime_locally
-      -derive-from-module
-      -Ppx_derive_at_runtime_example.Serialization)))
-  (only_erasable_extensions true)))
+      -derive-from-module=Ppx_derive_at_runtime_example.Serialization)))
+  (extension_universe upstream_compatible)))
 ```
 
 # Using derivers written with `ppx_derive_at_runtime`
@@ -327,11 +315,16 @@ labels, variant constructors, and polymorphic variant rows. The
 payload of the attribute is an expression. Runtime modules specify an
 attribute type for each of those four contexts.
 
+The `[@size.override]` attribute, like `[@size.custom]`, replaces
+derived values entirely. The argument is not a `Size.t`, however; its
+type is defined by the runtime module along with a conversion to
+`Size.t`.
+
 ```ocaml
 module History = struct
   type t =
-    { current_title : string
-    ; previous_titles : (string list [@size Ignore])
+    { current_title : (string [@size ( + ) 1])
+    ; previous_titles : (string list [@size.override 0])
     }
   [@@deriving size]
 end
@@ -345,16 +338,18 @@ runtime.
     { current_title = "Snakes on a Plane"
     ; previous_titles = [ "Pacific Air Flight 121"; "Snakes on a Plane" ]
     }
-- : int = 17
+- : int = 18
 ```
 
-For `[@@deriving size]`, all contexts use `Ignore.t` as their
-annotation type. Other derivers may use different attribute types for
-type expressions, record labels, variant constructors, and polymorphic
-variant rows, as needed. See where `Serializations` is defined in
-`example/serialization.mli` and `example/serialization.ml`, and where
-it is used in `test/test_expansion.ml` and `test/test_runtime.ml`, for
-examples of attributes in other positions.
+For `[@@deriving size]`, `[@size]` uses `int -> int` as its
+annotation type, and composes it with the derived size function. The
+attribute `[@size.override]` uses `int` as its type and produces a
+constant function. Other derivers may use different attribute types
+for type expressions, record labels, variant constructors, and
+polymorphic variant rows, as needed. See where `Serializations` is
+defined in `example/serialization.mli` and `example/serialization.ml`,
+and where it is used in `test/test_expansion.ml` and
+`test/test_runtime.ml`, for examples of attributes in other positions.
 
 ## Deriving values as expressions
 

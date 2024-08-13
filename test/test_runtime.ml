@@ -23,13 +23,12 @@ let test_serialization (type a) (module T : S0 with type t = a) =
   end
   in
   quickcheck_m
-    [%here]
     (module M)
     ~f:(fun t ->
       let sexp = T.serialization.sexp_of t in
       let round_trip = T.serialization.of_sexp sexp in
       (* sexp_of and of_sexp round-trip *)
-      require_equal [%here] (module M) t round_trip)
+      require_equal (module M) t round_trip)
 ;;
 
 let test_comparison (type a) ?(normalize = Fn.id) (module T : S0 with type t = a) =
@@ -40,15 +39,14 @@ let test_comparison (type a) ?(normalize = Fn.id) (module T : S0 with type t = a
   end
   in
   quickcheck_m
-    [%here]
     (module M)
     ~f:(fun t ->
       (* equality is reflexive *)
-      require [%here] (T.comparison.equal t t);
+      require (T.comparison.equal t t);
       (* compare is reflexive *)
-      require_equal [%here] (module Int) (T.comparison.compare t t) 0;
+      require_equal (module Int) (T.comparison.compare t t) 0;
       (* [normalize] is an equivalence class *)
-      require [%here] (T.comparison.equal t (normalize t)));
+      require (T.comparison.equal t (normalize t)));
   let module MM = struct
     type t = M.t * M.t [@@deriving quickcheck, sexp_of]
   end
@@ -60,26 +58,20 @@ let test_comparison (type a) ?(normalize = Fn.id) (module T : S0 with type t = a
   end
   in
   quickcheck_m
-    [%here]
     (module MM)
     ~f:(fun (a, b) ->
       (* equality is symmetric *)
-      require_equal
-        [%here]
-        (module Bool)
-        (T.comparison.equal a b)
-        (T.comparison.equal b a);
+      require_equal (module Bool) (T.comparison.equal a b) (T.comparison.equal b a);
       (* comparison is antisymmetric *)
       require_equal
-        [%here]
         (module Int_as_ordering)
         (T.comparison.compare a b)
         (-T.comparison.compare b a);
       (* equality and comparison do distinguish values *)
       if not (Poly.equal (normalize a) (normalize b))
       then (
-        require [%here] (not (T.comparison.equal a b));
-        require [%here] (T.comparison.compare a b <> 0)))
+        require (not (T.comparison.equal a b));
+        require (T.comparison.compare a b <> 0)))
 ;;
 
 let test0 ?normalize m : unit =
@@ -203,7 +195,7 @@ let%expect_test _ =
 module Empty = Test_expansion.Empty
 
 let%expect_test _ =
-  require_does_raise [%here] (fun () -> test0 (module Empty));
+  require_does_raise (fun () -> test0 (module Empty));
   [%expect {| "cannot generate value of empty type" |}]
 ;;
 
@@ -211,7 +203,8 @@ module Recursive = Test_expansion.Recursive
 
 let%expect_test _ =
   test0 (module Recursive);
-  [%expect {|
+  [%expect
+    {|
     (Leaf -1)
     (Leaf 0)
     (Leaf 1)
@@ -238,7 +231,8 @@ module Extension = Test_expansion.Extension
 
 let%expect_test _ =
   test0 (module Extension);
-  [%expect {|
+  [%expect
+    {|
     0
     1
     |}]
@@ -257,11 +251,11 @@ let%expect_test _ =
         C { x = 0; y });
   [%expect
     {|
-    alpha
-    (B papa)
-    (B (romeo Q))
-    (C (xray -1) (y (yankee -1)))
-    (C (xray 0) (y (yankee 0)))
-    (C (xray 1) (y (yankee 1)))
+    (t alpha)
+    (t (B papa))
+    (t (B (romeo queue)))
+    (t (C (xray -1) (y (yankee -1))))
+    (t (C (xray 0) (y (yankee 0))))
+    (t (C (xray 1) (y (yankee 1))))
     |}]
 ;;

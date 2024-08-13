@@ -176,9 +176,9 @@ module Type = struct
                          } ) )
            ; convert =
                (function
-                | `A x -> First x
-                | `B x -> Second (First x)
-                | `C x -> Second (Second x))
+                 | `A x -> First x
+                 | `B x -> Second (First x)
+                 | `C x -> Second (Second x))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -279,9 +279,9 @@ module Type = struct
                          } ) )
            ; convert =
                (function
-                | `A x -> First x
-                | `B x -> Second (First x)
-                | `C x -> Second (Second x))
+                 | `A x -> First x
+                 | `B x -> Second (First x)
+                 | `C x -> Second (Second x))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -385,9 +385,9 @@ module Type = struct
                          } ) )
            ; convert =
                (function
-                | `A x -> First x
-                | `B x -> Second (First x)
-                | `C x -> Second (Second x))
+                 | `A x -> First x
+                 | `B x -> Second (First x)
+                 | `C x -> Second (Second x))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -426,8 +426,8 @@ module Inherit = struct
                      } )
            ; convert =
                (function
-                | #Type.t as x -> First x
-                | `D -> Second ())
+                 | #Type.t as x -> First x
+                 | `D -> Second ())
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -454,8 +454,8 @@ module Inherit = struct
                      } )
            ; convert =
                (function
-                | #Type.t as x -> First x
-                | `D -> Second ())
+                 | #Type.t as x -> First x
+                 | `D -> Second ())
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -484,8 +484,8 @@ module Inherit = struct
                      } )
            ; convert =
                (function
-                | #Type.t as x -> First x
-                | `D -> Second ())
+                 | #Type.t as x -> First x
+                 | `D -> Second ())
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -703,11 +703,11 @@ module Variant = struct
                          } ) )
            ; convert =
                (function
-                | A -> First ()
-                | B (__value_0__, __value_1__, __value_2__) ->
-                  Second (First (__value_0__, __value_1__, __value_2__))
-                | C { x = __field_x__; y = __field_y__; z = __field_z__ } ->
-                  Second (Second (__field_x__, __field_y__, __field_z__)))
+                 | A -> First ()
+                 | B (__value_0__, __value_1__, __value_2__) ->
+                   Second (First (__value_0__, __value_1__, __value_2__))
+                 | C { x = __field_x__; y = __field_y__; z = __field_z__ } ->
+                   Second (Second (__field_x__, __field_y__, __field_z__)))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -791,11 +791,11 @@ module Variant = struct
                          } ) )
            ; convert =
                (function
-                | A -> First ()
-                | B (__value_0__, __value_1__, __value_2__) ->
-                  Second (First (__value_0__, __value_1__, __value_2__))
-                | C { x = __field_x__; y = __field_y__; z = __field_z__ } ->
-                  Second (Second (__field_x__, __field_y__, __field_z__)))
+                 | A -> First ()
+                 | B (__value_0__, __value_1__, __value_2__) ->
+                   Second (First (__value_0__, __value_1__, __value_2__))
+                 | C { x = __field_x__; y = __field_y__; z = __field_z__ } ->
+                   Second (Second (__field_x__, __field_y__, __field_z__)))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -879,11 +879,11 @@ module Variant = struct
                          } ) )
            ; convert =
                (function
-                | A -> First ()
-                | B (__value_0__, __value_1__, __value_2__) ->
-                  Second (First (__value_0__, __value_1__, __value_2__))
-                | C { x = __field_x__; y = __field_y__; z = __field_z__ } ->
-                  Second (Second (__field_x__, __field_y__, __field_z__)))
+                 | A -> First ()
+                 | B (__value_0__, __value_1__, __value_2__) ->
+                   Second (First (__value_0__, __value_1__, __value_2__))
+                 | C { x = __field_x__; y = __field_y__; z = __field_z__ } ->
+                   Second (Second (__field_x__, __field_y__, __field_z__)))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -1011,8 +1011,8 @@ module Recursive = struct
                           } )
                 ; convert =
                     (function
-                     | Leaf __value_0__ -> First __value_0__
-                     | Node __value_0__ -> Second __value_0__)
+                      | Leaf __value_0__ -> First __value_0__
+                      | Node __value_0__ -> Second __value_0__)
                 })
          with
          | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__)
@@ -1081,8 +1081,8 @@ module Recursive = struct
                           } )
                 ; convert =
                     (function
-                     | Leaf __value_0__ -> First __value_0__
-                     | Node __value_0__ -> Second __value_0__)
+                      | Leaf __value_0__ -> First __value_0__
+                      | Node __value_0__ -> Second __value_0__)
                 })
          with
          | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__)
@@ -1153,8 +1153,8 @@ module Recursive = struct
                           } )
                 ; convert =
                     (function
-                     | Leaf __value_0__ -> First __value_0__
-                     | Node __value_0__ -> Second __value_0__)
+                      | Leaf __value_0__ -> First __value_0__
+                      | Node __value_0__ -> Second __value_0__)
                 })
          with
          | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__)
@@ -1193,7 +1193,7 @@ module Custom = struct
                      { index = 1
                      ; value =
                          (Comparison.create_m (module Char)
-                           : char Ppx_derive_at_runtime_example.Comparison.t)
+                          : char Ppx_derive_at_runtime_example.Comparison.t)
                      ; access = (fun (_, x) -> x)
                      } )
            ; convert = (fun (x0, x1) -> x0, x1)
@@ -1217,7 +1217,7 @@ module Custom = struct
                      { index = 1
                      ; value =
                          (String.to_list "azAZ09_"
-                           : char Ppx_derive_at_runtime_example.Sample.t)
+                          : char Ppx_derive_at_runtime_example.Sample.t)
                      ; access = (fun (_, x) -> x)
                      } )
            ; convert = (fun (x0, x1) -> x0, x1)
@@ -1242,7 +1242,7 @@ module Custom = struct
                      { index = 1
                      ; value =
                          (Serialization.create_m (module Char)
-                           : char Ppx_derive_at_runtime_example.Serialization.t)
+                          : char Ppx_derive_at_runtime_example.Serialization.t)
                      ; access = (fun (_, x) -> x)
                      } )
            ; convert = (fun (x0, x1) -> x0, x1)
@@ -1274,7 +1274,7 @@ module Extension = struct
       (Comparison.unmap
          (comparison_int : int Ppx_derive_at_runtime_example.Comparison.t)
          ~f:Char.to_int
-        : char Ppx_derive_at_runtime_example.Comparison.t)
+       : char Ppx_derive_at_runtime_example.Comparison.t)
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
   ;;
@@ -1288,7 +1288,7 @@ module Extension = struct
       (List.filter_map
          (sample_int : int Ppx_derive_at_runtime_example.Sample.t)
          ~f:Char.of_int
-        : char Ppx_derive_at_runtime_example.Sample.t)
+       : char Ppx_derive_at_runtime_example.Sample.t)
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
   ;;
@@ -1303,7 +1303,7 @@ module Extension = struct
          (serialization_int : int Ppx_derive_at_runtime_example.Serialization.t)
          ~to_:Char.of_int_exn
          ~of_:Char.to_int
-        : char Ppx_derive_at_runtime_example.Serialization.t)
+       : char Ppx_derive_at_runtime_example.Serialization.t)
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
   ;;
@@ -1314,16 +1314,31 @@ module Extension = struct
 end
 
 module Attribute = struct
-  type r = [ `Q ] [@@deriving comparison, sample, serialization, quickcheck]
+  module Q = struct
+    type t = [ `Q ]
+
+    let sexp_of_t `Q = Sexp.Atom "queue"
+
+    let t_of_sexp = function
+      | Sexp.Atom "queue" -> `Q
+      | _ -> assert false
+    ;;
+  end
+
+  type r = [ `Q ]
+  [@@serialization.override (module Q)]
+  [@@deriving comparison, sample, serialization, quickcheck]
 
   type t =
     | A [@serialization Named "alpha"]
     | B of [ `P [@serialization Named "papa"] | (r[@serialization Named "romeo"]) ]
     | C of
-        { x : int [@comparison Ignore] [@serialization Named "xray"]
+        { x : (int[@comparison.override Always_equal]) [@serialization Named "xray"]
         ; y : (int[@serialization Named "yankee"])
         }
-  [@@deriving quickcheck] [@@deriving_inline comparison, sample, serialization]
+  [@@deriving quickcheck]
+  [@@serialization Named "t"]
+  [@@deriving_inline comparison, sample, serialization]
 
   let _ = fun (_ : t) -> ()
 
@@ -1374,8 +1389,8 @@ module Attribute = struct
                                                            } )
                                                  ; convert =
                                                      (function
-                                                      | `P -> First ()
-                                                      | #r as x -> Second x)
+                                                       | `P -> First ()
+                                                       | #r as x -> Second x)
                                                  })
                                         ; access = (fun x -> x)
                                         }
@@ -1393,8 +1408,12 @@ module Attribute = struct
                                       Node
                                         ( Leaf
                                             { name = "x"
-                                            ; attribute = Some Ignore
-                                            ; value = comparison_int
+                                            ; attribute = None
+                                            ; value =
+                                                Ppx_derive_at_runtime_example.Comparison
+                                                .Derive
+                                                .override
+                                                  Always_equal
                                             ; access = (fun (x, _) -> x)
                                             }
                                         , Leaf
@@ -1409,10 +1428,10 @@ module Attribute = struct
                          } ) )
            ; convert =
                (function
-                | A -> First ()
-                | B __value_0__ -> Second (First __value_0__)
-                | C { x = __field_x__; y = __field_y__ } ->
-                  Second (Second (__field_x__, __field_y__)))
+                 | A -> First ()
+                 | B __value_0__ -> Second (First __value_0__)
+                 | C { x = __field_x__; y = __field_y__ } ->
+                   Second (Second (__field_x__, __field_y__)))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -1466,8 +1485,8 @@ module Attribute = struct
                                                            } )
                                                  ; convert =
                                                      (function
-                                                      | `P -> First ()
-                                                      | #r as x -> Second x)
+                                                       | `P -> First ()
+                                                       | #r as x -> Second x)
                                                  })
                                         ; access = (fun x -> x)
                                         }
@@ -1501,10 +1520,10 @@ module Attribute = struct
                          } ) )
            ; convert =
                (function
-                | A -> First ()
-                | B __value_0__ -> Second (First __value_0__)
-                | C { x = __field_x__; y = __field_y__ } ->
-                  Second (Second (__field_x__, __field_y__)))
+                 | A -> First ()
+                 | B __value_0__ -> Second (First __value_0__)
+                 | C { x = __field_x__; y = __field_y__ } ->
+                   Second (Second (__field_x__, __field_y__)))
            })
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
@@ -1516,103 +1535,106 @@ module Attribute = struct
 
   let serialization =
     try
-      Ppx_derive_at_runtime_example.Serialization.Derive.variant
-        (T
-           { tree =
-               Node
-                 ( Leaf
-                     { name = "A"
-                     ; attribute = Some (Named "alpha")
-                     ; args = Empty
-                     ; create = (fun () -> A)
-                     }
-                 , Node
-                     ( Leaf
-                         { name = "B"
-                         ; attribute = None
-                         ; args =
-                             Tuple
-                               (T
-                                  { tree =
-                                      Leaf
-                                        { index = 0
-                                        ; value =
-                                            Ppx_derive_at_runtime_example.Serialization
-                                            .Derive
-                                            .poly_variant
-                                              (T
-                                                 { tree =
-                                                     Node
-                                                       ( Leaf
-                                                           { arg =
-                                                               Empty
-                                                                 { name = "P"
-                                                                 ; attribute =
-                                                                     Some (Named "papa")
-                                                                 }
-                                                           ; create = (fun () -> `P)
-                                                           }
-                                                       , Leaf
-                                                           { arg =
-                                                               Inherited
-                                                                 (Ppx_derive_at_runtime_example
-                                                                  .Serialization
-                                                                  .Derive
-                                                                  .with_attribute
-                                                                    serialization_r
-                                                                    (Named "romeo"))
-                                                           ; create =
-                                                               (fun x ->
-                                                                 (x : r :> [ `P | r ]))
-                                                           } )
-                                                 ; convert =
-                                                     (function
-                                                      | `P -> First ()
-                                                      | #r as x -> Second x)
-                                                 })
-                                        ; access = (fun x -> x)
-                                        }
-                                  ; convert = (fun x0 -> x0)
-                                  })
-                         ; create = (fun x0 -> B x0)
-                         }
-                     , Leaf
-                         { name = "C"
-                         ; attribute = None
-                         ; args =
-                             Record
-                               (T
-                                  { tree =
-                                      Node
-                                        ( Leaf
-                                            { name = "x"
-                                            ; attribute = Some (Named "xray")
-                                            ; value = serialization_int
-                                            ; access = (fun (x, _) -> x)
-                                            }
-                                        , Leaf
-                                            { name = "y"
-                                            ; attribute = None
-                                            ; value =
-                                                Ppx_derive_at_runtime_example
-                                                .Serialization
-                                                .Derive
-                                                .with_attribute
-                                                  serialization_int
-                                                  (Named "yankee")
-                                            ; access = (fun (_, x) -> x)
-                                            } )
-                                  ; convert = (fun (x, y) -> x, y)
-                                  })
-                         ; create = (fun (x, y) -> C { x; y })
-                         } ) )
-           ; convert =
-               (function
-                | A -> First ()
-                | B __value_0__ -> Second (First __value_0__)
-                | C { x = __field_x__; y = __field_y__ } ->
-                  Second (Second (__field_x__, __field_y__)))
-           })
+      Ppx_derive_at_runtime_example.Serialization.Derive.with_attribute
+        (Ppx_derive_at_runtime_example.Serialization.Derive.variant
+           (T
+              { tree =
+                  Node
+                    ( Leaf
+                        { name = "A"
+                        ; attribute = Some (Named "alpha")
+                        ; args = Empty
+                        ; create = (fun () -> A)
+                        }
+                    , Node
+                        ( Leaf
+                            { name = "B"
+                            ; attribute = None
+                            ; args =
+                                Tuple
+                                  (T
+                                     { tree =
+                                         Leaf
+                                           { index = 0
+                                           ; value =
+                                               Ppx_derive_at_runtime_example.Serialization
+                                               .Derive
+                                               .poly_variant
+                                                 (T
+                                                    { tree =
+                                                        Node
+                                                          ( Leaf
+                                                              { arg =
+                                                                  Empty
+                                                                    { name = "P"
+                                                                    ; attribute =
+                                                                        Some
+                                                                          (Named "papa")
+                                                                    }
+                                                              ; create = (fun () -> `P)
+                                                              }
+                                                          , Leaf
+                                                              { arg =
+                                                                  Inherited
+                                                                    (Ppx_derive_at_runtime_example
+                                                                     .Serialization
+                                                                     .Derive
+                                                                     .with_attribute
+                                                                       serialization_r
+                                                                       (Named "romeo"))
+                                                              ; create =
+                                                                  (fun x ->
+                                                                    (x : r :> [ `P | r ]))
+                                                              } )
+                                                    ; convert =
+                                                        (function
+                                                          | `P -> First ()
+                                                          | #r as x -> Second x)
+                                                    })
+                                           ; access = (fun x -> x)
+                                           }
+                                     ; convert = (fun x0 -> x0)
+                                     })
+                            ; create = (fun x0 -> B x0)
+                            }
+                        , Leaf
+                            { name = "C"
+                            ; attribute = None
+                            ; args =
+                                Record
+                                  (T
+                                     { tree =
+                                         Node
+                                           ( Leaf
+                                               { name = "x"
+                                               ; attribute = Some (Named "xray")
+                                               ; value = serialization_int
+                                               ; access = (fun (x, _) -> x)
+                                               }
+                                           , Leaf
+                                               { name = "y"
+                                               ; attribute = None
+                                               ; value =
+                                                   Ppx_derive_at_runtime_example
+                                                   .Serialization
+                                                   .Derive
+                                                   .with_attribute
+                                                     serialization_int
+                                                     (Named "yankee")
+                                               ; access = (fun (_, x) -> x)
+                                               } )
+                                     ; convert = (fun (x, y) -> x, y)
+                                     })
+                            ; create = (fun (x, y) -> C { x; y })
+                            } ) )
+              ; convert =
+                  (function
+                    | A -> First ()
+                    | B __value_0__ -> Second (First __value_0__)
+                    | C { x = __field_x__; y = __field_y__ } ->
+                      Second (Second (__field_x__, __field_y__)))
+              }))
+        (Named "t")
     with
     | exn -> Ppx_derive_at_runtime_lib.reraise exn Stdlib.__POS__
   ;;

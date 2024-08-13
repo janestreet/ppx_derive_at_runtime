@@ -31,5 +31,6 @@ end
     value))]. *)
 include
   Ppx_derive_at_runtime_lib.S_with_basic_attribute
-    with type 'a t := 'a t
-    with type _ attribute := Named.t
+  with type 'a t := 'a t
+  with type _ attribute := Named.t
+  with type 'a override := (module Sexpable.S with type t = 'a)

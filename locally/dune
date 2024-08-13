@@ -2,5 +2,5 @@
  (name ppx_derive_at_runtime_locally)
  (public_name ppx_derive_at_runtime.locally)
  (kind ppx_rewriter)
- (libraries base ppx_derive_at_runtime)
+ (libraries base ppx_derive_at_runtime ppxlib)
  (preprocess no_preprocessing))

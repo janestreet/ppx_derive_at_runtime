@@ -21,14 +21,14 @@ module Export : sig
   val comparison_list : 'a t -> 'a list t
 end
 
-module Ignore : sig
-  type t = Ignore
+module Always_equal : sig
+  type t = Always_equal
 end
 
-(** Derives [t]. Types, record labels, variant constructors, and polymorphic variant rows
-    can be annotated with [[@comparison Ignore]] to create a [t] that treats all values as
-    equal. *)
+(** Derives [t]. Types can be annotated with [[@comparison.override Always_equal]] to
+    create a [t] that treats all values as equal. *)
 include
   Ppx_derive_at_runtime_lib.S_with_basic_attribute
-    with type 'a t := 'a t
-     and type _ attribute := Ignore.t
+  with type 'a t := 'a t
+   and type _ attribute := Nothing.t
+   and type _ override := Always_equal.t

@@ -15,16 +15,10 @@ module Export : sig
   val size_list : 'a t -> 'a list t
 end
 
-(** Used as an attribute when deriving size. Types annotated with [[@size Ignore]] are not
-    included in the total. *)
-module Ignore : sig
-  type t = Ignore
-end
-
-(** Derives [t]. Per the definition of [S_with_basic_attribute], the [[@size]] attribute
-    may be used the same way on types, record labels, variant constructors, and
-    polymorphic variant rows. *)
+(** Derives [t], with [[@size f]] to modify the size with [f] and [@size.override n] to
+    produce the constant size [n]. *)
 include
   Ppx_derive_at_runtime_lib.S_with_basic_attribute
-    with type 'a t := 'a t
-     and type _ attribute := Ignore.t
+  with type 'a t := 'a t
+   and type _ attribute := int -> int
+   and type _ override := int

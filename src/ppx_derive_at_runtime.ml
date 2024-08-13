@@ -17,14 +17,20 @@ module Config = struct
     { module_id : Longident.t (** runtime module name **)
     ; name : string (** name used in [@@deriving] and derived value names *)
     ; attribute_custom : (core_type, expression) Attribute.t
-        (** [@foo.custom] attribute **)
+    (** [@foo.custom] attribute **)
     ; attribute_core_type : (core_type, expression) Attribute.t (** [@foo] on types **)
     ; attribute_clause : (constructor_declaration, expression) Attribute.t
-        (** @foo on variant clauses *)
+    (** @foo on variant clauses *)
     ; attribute_field : (label_declaration, expression) Attribute.t
-        (** [@foo] on record fields *)
+    (** [@foo] on record fields *)
     ; attribute_row : (row_field, expression) Attribute.t
-        (** [@foo] on polymorphic variant rows *)
+    (** [@foo] on polymorphic variant rows *)
+    ; attribute_type_decl : (type_declaration, expression) Attribute.t
+    (** [@@foo] on type declarations *)
+    ; override_core_type : (core_type, expression) Attribute.t
+    (** [@foo.override] on types **)
+    ; override_type_decl : (type_declaration, expression) Attribute.t
+    (** [@@foo.override] on type declarations *)
     }
 
   (** Parses a module path, with a useful error message. *)
@@ -64,6 +70,13 @@ module Config = struct
     let attribute_clause = Attribute.declare name Constructor_declaration expr Fn.id in
     let attribute_field = Attribute.declare name Label_declaration expr Fn.id in
     let attribute_row = Attribute.declare name Rtag expr Fn.id in
+    let attribute_type_decl = Attribute.declare name Type_declaration expr Fn.id in
+    let override_core_type =
+      Attribute.declare (name ^ ".override") Core_type expr Fn.id
+    in
+    let override_type_decl =
+      Attribute.declare (name ^ ".override") Type_declaration expr Fn.id
+    in
     { module_id
     ; name
     ; attribute_custom
@@ -71,6 +84,9 @@ module Config = struct
     ; attribute_clause
     ; attribute_field
     ; attribute_row
+    ; attribute_type_decl
+    ; override_core_type
+    ; override_type_decl
     }
   ;;
 
@@ -82,6 +98,9 @@ module Config = struct
   let attribute_custom t = t.attribute_custom
   let attribute_field t = t.attribute_field
   let attribute_row t = t.attribute_row
+  let attribute_type_decl t = t.attribute_type_decl
+  let override_core_type t = t.override_core_type
+  let override_type_decl t = t.override_type_decl
 
   (** name used in [@@deriving] *)
   let name_of_deriving t = t.name
@@ -168,14 +187,12 @@ module Structure = struct
 
   (** A conservative approximation of which expressions can raise at runtime. *)
   let rec can_raise expr =
-    match expr.pexp_desc with
+    match
+      Ppxlib_jane.Shim.Expression_desc.of_parsetree expr.pexp_desc ~loc:expr.pexp_loc
+    with
     (* constants and no-ops that cannot raise (except perhaps out of memory) *)
-    | Pexp_unreachable
-    | Pexp_ident _
-    | Pexp_constant _
-    | Pexp_function _
-    | Pexp_fun _
-    | Pexp_lazy _ -> false
+    | Pexp_unreachable | Pexp_ident _ | Pexp_constant _ | Pexp_function _ | Pexp_lazy _ ->
+      false
     (* type annotations, recur on actual value *)
     | Pexp_newtype ((_ : string loc), expr)
     | Pexp_constraint (expr, (_ : core_type))
@@ -293,12 +310,27 @@ module Structure = struct
   let rec expand_core_type ~config ~murec core_type =
     let loc = core_type.ptyp_loc in
     let expr =
-      match Attribute.get (Config.attribute_custom config) core_type with
-      | Some expr ->
+      match
+        ( Attribute.get (Config.attribute_custom config) core_type
+        , Attribute.get (Config.override_core_type config) core_type )
+      with
+      | Some expr, None ->
         (* If present, respect [@foo.custom] attributes. *)
         Config.type_of_value config ~loc (copy#core_type core_type)
         |> pexp_constraint ~loc expr
-      | None ->
+      | None, Some expr ->
+        (* If present, respect [@foo.override] attributes. *)
+        eapply ~loc (Config.runtime_value config ~loc "override") [ expr ]
+      | Some _, Some _ ->
+        (* Complain if both are present. *)
+        unsupported
+          ~loc
+          ~config
+          (Printf.sprintf
+             "[@%s] and [@%s] on the same type"
+             (Attribute.name (Config.attribute_custom config))
+             (Attribute.name (Config.override_type_decl config)))
+      | None, None ->
         (* Otherwise, follow the structure of the type. *)
         (match core_type.ptyp_desc with
          | Ptyp_any -> unsupported ~loc ~config "wildcard type"
@@ -384,10 +416,10 @@ module Structure = struct
           tree
           ~one:(expand_poly_variant_choice ~config)
           ~two:(fun lefts rights ->
-          List.concat
-            [ List.map lefts ~f:(fun (pat, expr) -> pat, [%expr First [%e expr]])
-            ; List.map rights ~f:(fun (pat, expr) -> pat, [%expr Second [%e expr]])
-            ])
+            List.concat
+              [ List.map lefts ~f:(fun (pat, expr) -> pat, [%expr First [%e expr]])
+              ; List.map rights ~f:(fun (pat, expr) -> pat, [%expr Second [%e expr]])
+              ])
         |> List.map ~f:(fun (lhs, rhs) -> case ~lhs ~guard:None ~rhs)
         |> pexp_function ~loc
       in
@@ -540,7 +572,10 @@ module Structure = struct
       let name = estring ~loc:cd.pcd_name.loc cd.pcd_name.txt in
       let args =
         match cd.pcd_args with
-        | Pcstr_tuple core_types ->
+        | Pcstr_tuple args ->
+          let core_types =
+            List.map args ~f:Ppxlib_jane.Shim.Pcstr_tuple_arg.to_core_type
+          in
           (match List.is_empty core_types with
            | true -> pexp_construct ~loc { loc; txt = Lident "Empty" } None
            | false ->
@@ -630,16 +665,25 @@ module Structure = struct
   let expand_type_declaration ~config ~murec td =
     let loc = td.ptype_loc in
     let body =
-      match td.ptype_kind with
-      | Ptype_open -> unsupported ~loc ~config "open type"
-      | Ptype_record lds ->
-        [ expand_record ~loc ~config ~murec ~as_tuple:false lds ]
-        |> eapply ~loc (Config.runtime_value config ~loc "record")
-      | Ptype_variant cds -> expand_variant ~loc ~config ~murec td cds
-      | Ptype_abstract ->
-        (match td.ptype_manifest with
-         | None -> unsupported ~loc ~config "abstract type"
-         | Some core_type -> expand_core_type ~config ~murec core_type)
+      match Attribute.get (Config.override_type_decl config) td with
+      | Some expr -> eapply ~loc (Config.runtime_value config ~loc "override") [ expr ]
+      | None ->
+        (match td.ptype_kind with
+         | Ptype_open -> unsupported ~loc ~config "open type"
+         | Ptype_record lds ->
+           [ expand_record ~loc ~config ~murec ~as_tuple:false lds ]
+           |> eapply ~loc (Config.runtime_value config ~loc "record")
+         | Ptype_variant cds -> expand_variant ~loc ~config ~murec td cds
+         | Ptype_abstract ->
+           (match td.ptype_manifest with
+            | None -> unsupported ~loc ~config "abstract type"
+            | Some core_type -> expand_core_type ~config ~murec core_type))
+    in
+    let body =
+      match Attribute.get (Config.attribute_type_decl config) td with
+      | None -> body
+      | Some expr ->
+        eapply ~loc (Config.runtime_value config ~loc "with_attribute") [ body; expr ]
     in
     let body = wrap_runtime_error ~loc body in
     let body = if Set.is_empty murec then body else pexp_lazy ~loc body in

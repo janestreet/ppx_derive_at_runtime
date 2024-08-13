@@ -15,6 +15,7 @@ module Definitions = struct
   module type Basic = sig
     type 'a t
     type 'a attribute
+    type 'a override
 
     (** Transforms an ['a t] to a ['b t].
 
@@ -49,6 +50,9 @@ module Definitions = struct
     (** Derives values from types annotated with an appropriate attribute. See
         [../README.mdx]. *)
     val with_attribute : 'a t -> 'a attribute -> 'a t
+
+    (** Derives values from override attributes. *)
+    val override : 'a override -> 'a t
   end
 
   (** Types of values provided by each type to be derived. *)
@@ -70,6 +74,9 @@ module Definitions = struct
     (** Attributes placed on a row of type ['row] of a polymorphic variant of type
         ['poly_variant]. *)
     type ('poly_variant, 'row) row_attribute
+
+    (** Attribute that overrides deriving for ['a]. *)
+    type 'a override
   end
 
   (** Specifies a product or sum type using a GADT binary tree representation. We use a
@@ -161,10 +168,10 @@ module Definitions = struct
     (** Produces a generic fold over [t], given a result type. *)
     module Fold (Acc : T2) :
       Fold
-        with type ('whole, 'tree) acc := ('whole, 'tree) Acc.t
-         and type ('left, 'right) node := ('left, 'right) node
-         and type ('whole, 'part) leaf := ('whole, 'part) leaf
-         and type ('whole, 'tree) tree := ('whole, 'tree) Tree.t
+      with type ('whole, 'tree) acc := ('whole, 'tree) Acc.t
+       and type ('left, 'right) node := ('left, 'right) node
+       and type ('whole, 'part) leaf := ('whole, 'part) leaf
+       and type ('whole, 'tree) tree := ('whole, 'tree) Tree.t
   end
 
   module type Types = sig
@@ -182,9 +189,9 @@ module Definitions = struct
 
       include
         Type
-          with type ('left, 'right) node := 'left * 'right
-          with type ('whole, 'part) leaf := ('whole, 'part) Part.t
-          with type ('tuple, 'pairs) conversion := 'pairs -> 'tuple
+        with type ('left, 'right) node := 'left * 'right
+        with type ('whole, 'part) leaf := ('whole, 'part) Part.t
+        with type ('tuple, 'pairs) conversion := 'pairs -> 'tuple
     end
 
     (** GADT representation of records as [string]-named product types. *)
@@ -200,9 +207,9 @@ module Definitions = struct
 
       include
         Type
-          with type ('left, 'right) node := 'left * 'right
-          with type ('record, 'label) leaf := ('record, 'label) Label.t
-          with type ('record, 'pairs) conversion := 'pairs -> 'record
+        with type ('left, 'right) node := 'left * 'right
+        with type ('record, 'label) leaf := ('record, 'label) Label.t
+        with type ('record, 'pairs) conversion := 'pairs -> 'record
     end
 
     (** GADT representation of variants as [string]-named sum types. *)
@@ -225,9 +232,9 @@ module Definitions = struct
 
       include
         Type
-          with type ('left, 'right) node := ('left, 'right) Either.t
-          with type ('variant, 'cons) leaf := ('variant, 'cons) Constructor.t
-          with type ('variant, 'eithers) conversion := 'variant -> 'eithers
+        with type ('left, 'right) node := ('left, 'right) Either.t
+        with type ('variant, 'cons) leaf := ('variant, 'cons) Constructor.t
+        with type ('variant, 'eithers) conversion := 'variant -> 'eithers
     end
 
     (** GADT representation of polymorphic variants as sum types. Tagged rows have
@@ -258,9 +265,9 @@ module Definitions = struct
 
       include
         Type
-          with type ('left, 'right) node := ('left, 'right) Either.t
-          with type ('poly_variant, 'row) leaf := ('poly_variant, 'row) Row.t
-          with type ('poly_variant, 'eithers) conversion := 'poly_variant -> 'eithers
+        with type ('left, 'right) node := ('left, 'right) Either.t
+        with type ('poly_variant, 'row) leaf := ('poly_variant, 'row) Row.t
+        with type ('poly_variant, 'eithers) conversion := 'poly_variant -> 'eithers
     end
   end
 
@@ -290,6 +297,9 @@ module Definitions = struct
 
     (** Derives values for types annotated with [Value.attribute]. *)
     val with_attribute : 'a Value.t -> 'a Value.attribute -> 'a Value.t
+
+    (** Derives values from override attributes. *)
+    val override : 'a Value.override -> 'a Value.t
   end
 
   (** Module type that a runtime module must satisfy for [ppx_derive_at_runtime]. *)
@@ -302,13 +312,15 @@ module Definitions = struct
   (** Specialization of [S] for [Of_basic], where all attributes share a single type. *)
   module type S_with_basic_attribute = sig
     type 'a attribute
+    type 'a override
 
     include
       S
-        with type 'a Derive.Value.attribute = 'a attribute
-         and type (_, 'a) Derive.Value.constructor_attribute = 'a attribute
-         and type (_, 'a) Derive.Value.label_attribute = 'a attribute
-         and type (_, 'a) Derive.Value.row_attribute = 'a attribute
+      with type 'a Derive.Value.attribute = 'a attribute
+       and type (_, 'a) Derive.Value.constructor_attribute = 'a attribute
+       and type (_, 'a) Derive.Value.label_attribute = 'a attribute
+       and type (_, 'a) Derive.Value.row_attribute = 'a attribute
+       and type 'a Derive.Value.override = 'a override
   end
 end
 
@@ -322,8 +334,9 @@ module type Ppx_derive_at_runtime_lib = sig
       Does not require the caller to interface with GADTs defined above. *)
   module Of_basic (Basic : Basic) :
     S_with_basic_attribute
-      with type 'a t := 'a Basic.t
-       and type 'a attribute := 'a Basic.attribute
+    with type 'a t := 'a Basic.t
+     and type 'a attribute := 'a Basic.attribute
+     and type 'a override := 'a Basic.override
 
   (** Defines GADT types and fold helpers for given derived value and attribute types. *)
   module Types (Value : Value) : Types with module Value := Value

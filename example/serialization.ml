@@ -41,6 +41,7 @@ module Derive = struct
     type (_, _) label_attribute = Named.t
     type (_, _) row_attribute = Named.t
     type (_, _) constructor_attribute = Named.t
+    type 'a override = (module Sexpable.S with type t = 'a)
   end
 
   (* The [Types] functors gives us the GADT binary trees for tuples, records, variants,
@@ -118,9 +119,9 @@ module Derive = struct
           ~leaf:
             { on_leaf =
                 (fun (type part)
-                     ({ name; attribute; args; create = _ } :
-                       (_, part) Variant.Constructor.t)
-                   : (part -> Sexp.t) ->
+                  ({ name; attribute; args; create = _ } :
+                    (_, part) Variant.Constructor.t)
+                  : (part -> Sexp.t) ->
                   let name =
                     match attribute with
                     | Some (Named name) -> name
@@ -155,25 +156,26 @@ module Derive = struct
           root.tree
           ~leaf:
             { on_leaf =
-                (fun (type part) ({ arg; create = _ } : (_, part) Poly_variant.Row.t)
-                   : (part -> Sexp.t) ->
-                  (match arg with
-                   | Empty { name; attribute } ->
-                     let name =
-                       match attribute with
-                       | Some (Named name) -> name
-                       | None -> name
-                     in
-                     fun () -> Atom name
-                   | Value { name; attribute; value } ->
-                     fun x ->
-                       let name =
-                         match attribute with
-                         | Some (Named name) -> name
-                         | None -> name
-                       in
-                       List [ Atom name; value.sexp_of x ]
-                   | Inherited value -> value.sexp_of))
+                (fun (type part)
+                  ({ arg; create = _ } : (_, part) Poly_variant.Row.t)
+                  : (part -> Sexp.t) ->
+                  match arg with
+                  | Empty { name; attribute } ->
+                    let name =
+                      match attribute with
+                      | Some (Named name) -> name
+                      | None -> name
+                    in
+                    fun () -> Atom name
+                  | Value { name; attribute; value } ->
+                    fun x ->
+                      let name =
+                        match attribute with
+                        | Some (Named name) -> name
+                        | None -> name
+                      in
+                      List [ Atom name; value.sexp_of x ]
+                  | Inherited value -> value.sexp_of)
             }
           ~node:
             { on_node =
@@ -278,20 +280,20 @@ module Derive = struct
       match args with
       | Empty ->
         (function
-         | Atom atom when String.equal atom name -> Some (create ())
-         | _ -> None)
+          | Atom atom when String.equal atom name -> Some (create ())
+          | _ -> None)
       | Tuple t ->
         let of_sexp = tuple t in
         (function
-         | List (Atom atom :: sexps) when String.equal atom name ->
-           Some (create (of_sexp (List sexps)))
-         | _ -> None)
+          | List (Atom atom :: sexps) when String.equal atom name ->
+            Some (create (of_sexp (List sexps)))
+          | _ -> None)
       | Record r ->
         let of_sexp = record r in
         (function
-         | List (Atom atom :: sexps) when String.equal atom name ->
-           Some (create (of_sexp (List sexps)))
-         | _ -> None)
+          | List (Atom atom :: sexps) when String.equal atom name ->
+            Some (create (of_sexp (List sexps)))
+          | _ -> None)
     ;;
 
     let on_poly_variant_leaf (type a b) ({ arg; create } : (a, b) Poly_variant.Row.t)
@@ -305,8 +307,8 @@ module Derive = struct
           | None -> name
         in
         (function
-         | Atom atom when String.equal atom name -> Some (create ())
-         | _ -> None)
+          | Atom atom when String.equal atom name -> Some (create ())
+          | _ -> None)
       | Value { name; attribute; value } ->
         let name =
           match attribute with
@@ -314,9 +316,9 @@ module Derive = struct
           | None -> name
         in
         (function
-         | List [ Atom atom; sexp ] when String.equal atom name ->
-           Some (create (value.of_sexp sexp))
-         | _ -> None)
+          | List [ Atom atom; sexp ] when String.equal atom name ->
+            Some (create (value.of_sexp sexp))
+          | _ -> None)
       | Inherited value ->
         fun sexp -> Option.try_with (fun () -> create (value.of_sexp sexp))
     ;;
@@ -374,8 +376,10 @@ module Derive = struct
     { sexp_of = (fun x -> List [ Atom name; t.sexp_of x ])
     ; of_sexp =
         (function
-         | List [ Atom atom; sexp ] when String.equal atom name -> t.of_sexp sexp
-         | _ -> raise_s [%message "bad sexp"])
+          | List [ Atom atom; sexp ] when String.equal atom name -> t.of_sexp sexp
+          | _ -> raise_s [%message "bad sexp"])
     }
   ;;
+
+  let override = create_m
 end

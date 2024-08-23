@@ -1,7 +1,8 @@
 (library
  (name ppx_derive_at_runtime)
  (public_name ppx_derive_at_runtime)
- (libraries base ppxlib ppxlib_jane ocaml-compiler-libs.common compiler-libs.common)
+ (libraries base ppxlib ppxlib_jane ocaml-compiler-libs.common
+   compiler-libs.common)
  (ppx_runtime_libraries ppx_derive_at_runtime.lib)
  (preprocess
   (pps ppxlib.metaquot)))

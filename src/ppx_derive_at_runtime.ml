@@ -195,14 +195,16 @@ module Structure = struct
       false
     (* type annotations, recur on actual value *)
     | Pexp_newtype ((_ : string loc), expr)
-    | Pexp_constraint (expr, (_ : core_type))
-    | Pexp_coerce (expr, (_ : core_type option), (_ : core_type)) -> can_raise expr
+    | Pexp_constraint (expr, (_ : core_type option), _)
+    | Pexp_coerce (expr, (_ : core_type option), (_ : core_type))
+    | Pexp_stack expr -> can_raise expr
     (* expressions that might raise, or that we have had no reason to traverse yet *)
     | Pexp_let _
     | Pexp_apply _
     | Pexp_match _
     | Pexp_try _
     | Pexp_tuple _
+    | Pexp_unboxed_tuple _
     | Pexp_construct _
     | Pexp_variant _
     | Pexp_record _
@@ -332,13 +334,14 @@ module Structure = struct
              (Attribute.name (Config.override_type_decl config)))
       | None, None ->
         (* Otherwise, follow the structure of the type. *)
-        (match core_type.ptyp_desc with
+        (match Ppxlib_jane.Shim.Core_type_desc.of_parsetree core_type.ptyp_desc with
          | Ptyp_any -> unsupported ~loc ~config "wildcard type"
          | Ptyp_var var -> evar ~loc (Config.name_of_type_variable config var)
          | Ptyp_arrow _ -> unsupported ~loc ~config "arrow type"
          | Ptyp_tuple core_types ->
            [ expand_tuple ~loc ~config ~murec core_types ]
            |> eapply ~loc (Config.runtime_value config ~loc "tuple")
+         | Ptyp_unboxed_tuple _ -> unsupported ~loc ~config "unboxed tuple type"
          | Ptyp_constr (id, params) ->
            List.map params ~f:(expand_core_type ~config ~murec)
            |> expand_reference id ~loc ~config ~murec

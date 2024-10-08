@@ -198,36 +198,9 @@ module Structure = struct
     | Pexp_constraint (expr, (_ : core_type option), _)
     | Pexp_coerce (expr, (_ : core_type option), (_ : core_type))
     | Pexp_stack expr -> can_raise expr
-    (* expressions that might raise, or that we have had no reason to traverse yet *)
-    | Pexp_let _
-    | Pexp_apply _
-    | Pexp_match _
-    | Pexp_try _
-    | Pexp_tuple _
-    | Pexp_unboxed_tuple _
-    | Pexp_construct _
-    | Pexp_variant _
-    | Pexp_record _
-    | Pexp_field _
-    | Pexp_setfield _
-    | Pexp_array _
-    | Pexp_ifthenelse _
-    | Pexp_sequence _
-    | Pexp_while _
-    | Pexp_for _
-    | Pexp_send _
-    | Pexp_new _
-    | Pexp_setinstvar _
-    | Pexp_override _
-    | Pexp_letmodule _
-    | Pexp_letexception _
-    | Pexp_assert _
-    | Pexp_poly _
-    | Pexp_object _
-    | Pexp_pack _
-    | Pexp_open _
-    | Pexp_letop _
-    | Pexp_extension _ -> true
+    (* conservatively assume that other constructs we haven't special-cased might raise.
+    *)
+    | _ -> true
   ;;
 
   (** If something raises while a type is "deriving at runtime", we want to report where
@@ -335,25 +308,22 @@ module Structure = struct
       | None, None ->
         (* Otherwise, follow the structure of the type. *)
         (match Ppxlib_jane.Shim.Core_type_desc.of_parsetree core_type.ptyp_desc with
-         | Ptyp_any -> unsupported ~loc ~config "wildcard type"
          | Ptyp_var var -> evar ~loc (Config.name_of_type_variable config var)
-         | Ptyp_arrow _ -> unsupported ~loc ~config "arrow type"
          | Ptyp_tuple core_types ->
            [ expand_tuple ~loc ~config ~murec core_types ]
            |> eapply ~loc (Config.runtime_value config ~loc "tuple")
-         | Ptyp_unboxed_tuple _ -> unsupported ~loc ~config "unboxed tuple type"
          | Ptyp_constr (id, params) ->
            List.map params ~f:(expand_core_type ~config ~murec)
            |> expand_reference id ~loc ~config ~murec
-         | Ptyp_object _ -> unsupported ~loc ~config "object type"
-         | Ptyp_class _ -> unsupported ~loc ~config "class type"
          | Ptyp_alias (core_type, _) -> expand_core_type ~config ~murec core_type
          | Ptyp_variant (rows, _, _) ->
            [ expand_poly_variant ~loc ~config ~murec ~whole:core_type rows ]
            |> eapply ~loc (Config.runtime_value config ~loc "poly_variant")
-         | Ptyp_poly _ -> unsupported ~loc ~config "explicit polymorphic types"
-         | Ptyp_package _ -> unsupported ~loc ~config "first-class module type"
-         | Ptyp_extension _ -> unsupported ~loc ~config "ppx extension")
+         | desc ->
+           unsupported
+             ~loc
+             ~config
+             (Ppxlib_jane.Language_feature_name.of_core_type_desc desc))
     in
     match Attribute.get (Config.attribute_core_type config) core_type with
     | None -> expr

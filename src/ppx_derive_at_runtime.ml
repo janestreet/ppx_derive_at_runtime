@@ -194,7 +194,7 @@ module Structure = struct
     | Pexp_unreachable | Pexp_ident _ | Pexp_constant _ | Pexp_function _ | Pexp_lazy _ ->
       false
     (* type annotations, recur on actual value *)
-    | Pexp_newtype ((_ : string loc), expr)
+    | Pexp_newtype ((_ : string loc), (_ : Ppxlib_jane.jkind_annotation option), expr)
     | Pexp_constraint (expr, (_ : core_type option), _)
     | Pexp_coerce (expr, (_ : core_type option), (_ : core_type))
     | Pexp_stack expr -> can_raise expr
@@ -308,14 +308,17 @@ module Structure = struct
       | None, None ->
         (* Otherwise, follow the structure of the type. *)
         (match Ppxlib_jane.Shim.Core_type_desc.of_parsetree core_type.ptyp_desc with
-         | Ptyp_var var -> evar ~loc (Config.name_of_type_variable config var)
-         | Ptyp_tuple core_types ->
-           [ expand_tuple ~loc ~config ~murec core_types ]
-           |> eapply ~loc (Config.runtime_value config ~loc "tuple")
+         | Ptyp_var (var, _) -> evar ~loc (Config.name_of_type_variable config var)
+         | Ptyp_tuple labeled_core_types ->
+           (match Ppxlib_jane.as_unlabeled_tuple labeled_core_types with
+            | Some core_types ->
+              [ expand_tuple ~loc ~config ~murec core_types ]
+              |> eapply ~loc (Config.runtime_value config ~loc "tuple")
+            | None -> unsupported ~loc ~config "labeled tuple type")
          | Ptyp_constr (id, params) ->
            List.map params ~f:(expand_core_type ~config ~murec)
            |> expand_reference id ~loc ~config ~murec
-         | Ptyp_alias (core_type, _) -> expand_core_type ~config ~murec core_type
+         | Ptyp_alias (core_type, _, _) -> expand_core_type ~config ~murec core_type
          | Ptyp_variant (rows, _, _) ->
            [ expand_poly_variant ~loc ~config ~murec ~whole:core_type rows ]
            |> eapply ~loc (Config.runtime_value config ~loc "poly_variant")

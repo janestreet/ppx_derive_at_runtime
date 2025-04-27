@@ -22,14 +22,14 @@ module Definitions = struct
         In covariant types, only [to_] is needed. Examples include [type 'a t = 'a list]
         and [type 'a t = Sexp.t -> 'a].
 
-        In contravariant types, only [of_] is needed. Examples include [type 'a t = 'a ->
-        Sexp.t].
+        In contravariant types, only [of_] is needed. Examples include
+        [type 'a t = 'a -> Sexp.t].
 
         Invariant types need both [to_] and [of_]. Examples include [type 'a t = 'a -> 'a]
         and [type 'a t = 'a ref].
 
-        Monomorphic types need neither [to_] nor [of_]. Examples include [type 'a t =
-        unit]. *)
+        Monomorphic types need neither [to_] nor [of_]. Examples include
+        [type 'a t = unit]. *)
     val map_unmap : 'a t -> to_:('a -> 'b) -> of_:('b -> 'a) -> 'b t
 
     (** Derives values from singleton types. *)
@@ -67,8 +67,8 @@ module Definitions = struct
     type ('record, 'label) label_attribute
 
     (** Attributes placed on a constructor of type ['cons] of a variant of type
-        ['variant]. The type ['cons] depends on the arguments of the variant
-        constructor; see [Types.Variant], below. *)
+        ['variant]. The type ['cons] depends on the arguments of the variant constructor;
+        see [Types.Variant], below. *)
     type ('variant, 'cons) constructor_attribute
 
     (** Attributes placed on a row of type ['row] of a polymorphic variant of type
@@ -94,8 +94,8 @@ module Definitions = struct
     (** A node combining two subtrees of derived values. For product types, this is
         ['left * 'right]. For sum types, this is [('left, 'right) Either.t].
 
-        The [!] below means that [node] must be injective in both type parameters.
-        This is required for the [Tree.t] GADT to typecheck, below. *)
+        The [!] below means that [node] must be injective in both type parameters. This is
+        required for the [Tree.t] GADT to typecheck, below. *)
     type (!'left, !'right) node
 
     (** Conversion function between a type and its generic "tree-shaped" type. In product

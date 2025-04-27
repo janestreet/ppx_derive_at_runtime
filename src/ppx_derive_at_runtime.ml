@@ -20,7 +20,7 @@ module Config = struct
     (** [@foo.custom] attribute **)
     ; attribute_core_type : (core_type, expression) Attribute.t (** [@foo] on types **)
     ; attribute_clause : (constructor_declaration, expression) Attribute.t
-    (** @foo on variant clauses *)
+    (** \@foo on variant clauses *)
     ; attribute_field : (label_declaration, expression) Attribute.t
     (** [@foo] on record fields *)
     ; attribute_row : (row_field, expression) Attribute.t
@@ -164,6 +164,16 @@ module Signature = struct
         ~type_:(combinator_type_of_type_declaration td ~f:(Config.type_of_value config))
         ~prim:[]
       |> psig_value ~loc)
+  ;;
+
+  (** Expand [%foo: _] extensions. *)
+  let extension ~config =
+    Extension.declare
+      (Config.name_of_deriving config)
+      Core_type
+      Ast_pattern.(ptyp __)
+      (fun ~loc ~path:_ core_type ->
+        [%type: [%t Config.type_of_value config ~loc core_type]])
   ;;
 end
 
@@ -644,11 +654,13 @@ module Structure = struct
       match Attribute.get (Config.override_type_decl config) td with
       | Some expr -> eapply ~loc (Config.runtime_value config ~loc "override") [ expr ]
       | None ->
-        (match td.ptype_kind with
+        (match Ppxlib_jane.Shim.Type_kind.of_parsetree td.ptype_kind with
          | Ptype_open -> unsupported ~loc ~config "open type"
          | Ptype_record lds ->
            [ expand_record ~loc ~config ~murec ~as_tuple:false lds ]
            |> eapply ~loc (Config.runtime_value config ~loc "record")
+         | Ptype_record_unboxed_product _ ->
+           unsupported ~loc ~config "unboxed record type"
          | Ptype_variant cds -> expand_variant ~loc ~config ~murec td cds
          | Ptype_abstract ->
            (match td.ptype_manifest with
@@ -762,5 +774,8 @@ let register_fully_qualified_runtime_module here module_path =
   let sig_type_decl = Deriving.Generator.make_noarg (Signature.expand ~config) in
   let str_type_decl = Deriving.Generator.make_noarg (Structure.expand ~config) in
   let extension = Structure.extension ~config in
+  Driver.register_transformation
+    (Config.name_of_deriving config)
+    ~rules:[ Context_free.Rule.extension (Signature.extension ~config) ];
   Config.name_of_deriving config |> Deriving.add ~sig_type_decl ~str_type_decl ~extension
 ;;

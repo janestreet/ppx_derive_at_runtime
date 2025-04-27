@@ -1,8 +1,8 @@
 (** Derives how to derive [sexp_of] and [of_sexp] using [ppx_derive_at_runtime].
 
-    This is an example of an _intensional_ derivation: syntactic details of a type
-    may matter, such as constructor names, or whether a product type is represented
-    as a tuple or as a record. *)
+    This is an example of an _intensional_ derivation: syntactic details of a type may
+    matter, such as constructor names, or whether a product type is represented as a tuple
+    or as a record. *)
 
 open! Base
 
@@ -27,8 +27,8 @@ end
     may be annotated with [[@serialization Named "my-name"]]. In the case of record
     labels, variant constructors, and tagged polymorphic variant rows, this replaces the
     existing name. For types and inherited polymorphic variant rows, this wraps the sexp
-    for the value with the given name, e.g. [(some value)] becomes [(my-name (some
-    value))]. *)
+    for the value with the given name, e.g. [(some value)] becomes
+    [(my-name (some value))]. *)
 include
   Ppx_derive_at_runtime_lib.S_with_basic_attribute
   with type 'a t := 'a t

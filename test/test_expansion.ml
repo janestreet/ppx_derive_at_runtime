@@ -1643,3 +1643,20 @@ module Attribute = struct
 
   [@@@end]
 end
+
+module type Extension_in_signature = sig
+  type 'a t
+
+  [@@@ocaml.warning "-32"]
+
+  [@@@expand_inline:
+    val create : [%comparison: 'a t] * [%sample: 'a t] * [%serialization: 'a t] -> 'a t]
+
+  val create
+    :  'a t Ppx_derive_at_runtime_example.Comparison.t
+       * 'a t Ppx_derive_at_runtime_example.Sample.t
+       * 'a t Ppx_derive_at_runtime_example.Serialization.t
+    -> 'a t
+
+  [@@@end]
+end

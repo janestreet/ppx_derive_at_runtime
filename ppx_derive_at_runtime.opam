@@ -15,7 +15,7 @@ depends: [
   "expect_test_helpers_core"
   "ppx_jane"
   "ppxlib_jane"
-  "dune"                     {>= "3.11.0"}
+  "dune"                     {>= "3.17.0"}
   "ocaml-compiler-libs"      {>= "v0.11.0"}
   "ppxlib"                   {>= "0.33.0"}
 ]

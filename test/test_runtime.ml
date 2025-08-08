@@ -22,13 +22,11 @@ let test_serialization (type a) (module T : S0 with type t = a) =
     let sexp_of_t = T.serialization.sexp_of
   end
   in
-  quickcheck_m
-    (module M)
-    ~f:(fun t ->
-      let sexp = T.serialization.sexp_of t in
-      let round_trip = T.serialization.of_sexp sexp in
-      (* sexp_of and of_sexp round-trip *)
-      require_equal (module M) t round_trip)
+  quickcheck_m (module M) ~f:(fun t ->
+    let sexp = T.serialization.sexp_of t in
+    let round_trip = T.serialization.of_sexp sexp in
+    (* sexp_of and of_sexp round-trip *)
+    require_equal (module M) t round_trip)
 ;;
 
 let test_comparison (type a) ?(normalize = Fn.id) (module T : S0 with type t = a) =
@@ -38,15 +36,13 @@ let test_comparison (type a) ?(normalize = Fn.id) (module T : S0 with type t = a
     let sexp_of_t = T.serialization.sexp_of
   end
   in
-  quickcheck_m
-    (module M)
-    ~f:(fun t ->
-      (* equality is reflexive *)
-      require (T.comparison.equal t t);
-      (* compare is reflexive *)
-      require_equal (module Int) (T.comparison.compare t t) 0;
-      (* [normalize] is an equivalence class *)
-      require (T.comparison.equal t (normalize t)));
+  quickcheck_m (module M) ~f:(fun t ->
+    (* equality is reflexive *)
+    require (T.comparison.equal t t);
+    (* compare is reflexive *)
+    require_equal (module Int) (T.comparison.compare t t) 0;
+    (* [normalize] is an equivalence class *)
+    require (T.comparison.equal t (normalize t)));
   let module MM = struct
     type t = M.t * M.t [@@deriving quickcheck, sexp_of]
   end
@@ -57,21 +53,19 @@ let test_comparison (type a) ?(normalize = Fn.id) (module T : S0 with type t = a
     let equal a b = Comparable.lift Ordering.equal ~f:Ordering.of_int a b
   end
   in
-  quickcheck_m
-    (module MM)
-    ~f:(fun (a, b) ->
-      (* equality is symmetric *)
-      require_equal (module Bool) (T.comparison.equal a b) (T.comparison.equal b a);
-      (* comparison is antisymmetric *)
-      require_equal
-        (module Int_as_ordering)
-        (T.comparison.compare a b)
-        (-T.comparison.compare b a);
-      (* equality and comparison do distinguish values *)
-      if not (Poly.equal (normalize a) (normalize b))
-      then (
-        require (not (T.comparison.equal a b));
-        require (T.comparison.compare a b <> 0)))
+  quickcheck_m (module MM) ~f:(fun (a, b) ->
+    (* equality is symmetric *)
+    require_equal (module Bool) (T.comparison.equal a b) (T.comparison.equal b a);
+    (* comparison is antisymmetric *)
+    require_equal
+      (module Int_as_ordering)
+      (T.comparison.compare a b)
+      (-T.comparison.compare b a);
+    (* equality and comparison do distinguish values *)
+    if not (Poly.equal (normalize a) (normalize b))
+    then (
+      require (not (T.comparison.equal a b));
+      require (T.comparison.compare a b <> 0)))
 ;;
 
 let test0 ?normalize m : unit =
@@ -241,14 +235,12 @@ let%expect_test _ =
 module Attribute = Test_expansion.Attribute
 
 let%expect_test _ =
-  test0
-    (module Attribute)
-    ~normalize:(fun (t : Attribute.t) ->
-      match t with
-      | A | B _ -> t
-      | C { x = _; y } ->
-        (* C {x;y} annotates [x] as [Ignore] for purpose of comparisons *)
-        C { x = 0; y });
+  test0 (module Attribute) ~normalize:(fun (t : Attribute.t) ->
+    match t with
+    | A | B _ -> t
+    | C { x = _; y } ->
+      (* C {x;y} annotates [x] as [Ignore] for purpose of comparisons *)
+      C { x = 0; y });
   [%expect
     {|
     (t alpha)

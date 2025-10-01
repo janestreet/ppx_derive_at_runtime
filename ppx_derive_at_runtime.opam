@@ -13,6 +13,7 @@ depends: [
   "ocaml" {>= "5.1.0"}
   "base"
   "expect_test_helpers_core"
+  "ppx_helpers"
   "ppx_jane"
   "ppxlib_jane"
   "dune"                     {>= "3.17.0"}

@@ -161,7 +161,11 @@ module Signature = struct
       value_description
         ~loc
         ~name:(Loc.map ~f:(Config.name_of_value config) td.ptype_name)
-        ~type_:(combinator_type_of_type_declaration td ~f:(Config.type_of_value config))
+        ~type_:
+          (Ppx_helpers.combinator_type_of_type_declaration
+             td
+             ~f:(Config.type_of_value config)
+           |> Ppx_helpers.Polytype.to_core_type)
         ~prim:[]
       |> psig_value ~loc)
   ;;

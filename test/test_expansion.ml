@@ -29,15 +29,18 @@ module type S1 = sig
     [@@@ocaml.warning "-32"]
 
     val comparison
-      :  'a Ppx_derive_at_runtime_example.Comparison.t
+      : 'a.
+      'a Ppx_derive_at_runtime_example.Comparison.t
       -> 'a t Ppx_derive_at_runtime_example.Comparison.t
 
     val sample
-      :  'a Ppx_derive_at_runtime_example.Sample.t
+      : 'a.
+      'a Ppx_derive_at_runtime_example.Sample.t
       -> 'a t Ppx_derive_at_runtime_example.Sample.t
 
     val serialization
-      :  'a Ppx_derive_at_runtime_example.Serialization.t
+      : 'a.
+      'a Ppx_derive_at_runtime_example.Serialization.t
       -> 'a t Ppx_derive_at_runtime_example.Serialization.t
   end
   [@@ocaml.doc "@inline"]
@@ -53,17 +56,20 @@ module type S2 = sig
     [@@@ocaml.warning "-32"]
 
     val comparison
-      :  'a Ppx_derive_at_runtime_example.Comparison.t
+      : 'a 'b.
+      'a Ppx_derive_at_runtime_example.Comparison.t
       -> 'b Ppx_derive_at_runtime_example.Comparison.t
       -> ('a, 'b) t Ppx_derive_at_runtime_example.Comparison.t
 
     val sample
-      :  'a Ppx_derive_at_runtime_example.Sample.t
+      : 'a 'b.
+      'a Ppx_derive_at_runtime_example.Sample.t
       -> 'b Ppx_derive_at_runtime_example.Sample.t
       -> ('a, 'b) t Ppx_derive_at_runtime_example.Sample.t
 
     val serialization
-      :  'a Ppx_derive_at_runtime_example.Serialization.t
+      : 'a 'b.
+      'a Ppx_derive_at_runtime_example.Serialization.t
       -> 'b Ppx_derive_at_runtime_example.Serialization.t
       -> ('a, 'b) t Ppx_derive_at_runtime_example.Serialization.t
   end

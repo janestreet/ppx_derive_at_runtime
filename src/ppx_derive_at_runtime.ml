@@ -29,7 +29,7 @@ module Config = struct
 
   (** Parses a module path, with a useful error message. *)
   let parse_identifier string ~loc =
-    match Ocaml_common.Parse.simple_module_path (Lexing.from_string string) with
+    match Longident.parse string with
     | id -> id
     | exception _ ->
       Location.raise_errorf
@@ -174,7 +174,6 @@ module Structure = struct
     | Pexp_ident _
     | Pexp_constant _
     | Pexp_function _
-    | Pexp_fun _
     | Pexp_lazy _ -> false
     (* type annotations, recur on actual value *)
     | Pexp_newtype ((_ : string loc), expr)
@@ -389,7 +388,7 @@ module Structure = struct
             ; List.map rights ~f:(fun (pat, expr) -> pat, [%expr Second [%e expr]])
             ])
         |> List.map ~f:(fun (lhs, rhs) -> case ~lhs ~guard:None ~rhs)
-        |> pexp_function ~loc
+        |> pexp_function_cases ~loc
       in
       Some (erecord ~loc [ "tree", tree_expr; "convert", convert_expr ])
       |> pexp_construct ~loc { loc; txt = Lident "T" }
@@ -596,7 +595,7 @@ module Structure = struct
             ~guard:None
             ~rhs:(pexp_unreachable ~loc)
         ]
-        |> pexp_function ~loc
+        |> pexp_function_cases ~loc
       ]
       |> eapply ~loc (Config.runtime_value config ~loc "empty")
     | Some tree ->
@@ -617,7 +616,7 @@ module Structure = struct
             ; List.map rights ~f:(fun (pat, expr) -> pat, [%expr Second [%e expr]])
             ])
         |> List.map ~f:(fun (lhs, rhs) -> case ~lhs ~guard:None ~rhs)
-        |> pexp_function ~loc
+        |> pexp_function_cases ~loc
       in
       Some (erecord ~loc [ "tree", tree_expr; "convert", convert_expr ])
       |> pexp_construct ~loc { loc; txt = Lident "T" }

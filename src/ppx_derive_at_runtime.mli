@@ -7,6 +7,10 @@ open! Base
 
     See [../README.mdx] for further details. *)
 val register_fully_qualified_runtime_module
-  :  Source_code_position.t
+  :  ?portable:bool
+       (** If [true] and the module satisfies the signature
+           [Ppx_derive_at_runtime_lib.S [@mode portable]], the ppx will attempt to
+           generate portable derived values. Default [false]. *)
+  -> Source_code_position.t
   -> string
   -> Ppxlib.Deriving.t

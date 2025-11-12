@@ -31,24 +31,26 @@ module Type (Spec : sig
 
   type _ t = T : ('a, _) Root.t -> 'a t
 
-  module Fold (Acc : T2) = struct
+  module%template.portable [@modality p] Fold (Acc : T2) = struct
     type 'a leaf_callback =
-      { on_leaf : 'leaf 'name. ('a, 'leaf) leaf -> ('a, 'leaf) Acc.t }
+      { on_leaf : 'leaf 'name. ('a, 'leaf) leaf @ p -> ('a, 'leaf) Acc.t @ p }
     [@@unboxed]
 
     type 'a node_callback =
       { on_node :
           'left 'right.
-          ('a, 'left) Acc.t -> ('a, 'right) Acc.t -> ('a, ('left, 'right) node) Acc.t
+          ('a, 'left) Acc.t @ p
+          -> ('a, 'right) Acc.t @ p
+          -> ('a, ('left, 'right) node) Acc.t @ p
       }
     [@@unboxed]
 
     let rec fold
       : type a tree.
-        (a, tree) Tree.t
-        -> leaf:a leaf_callback
-        -> node:a node_callback
-        -> (a, tree) Acc.t
+        (a, tree) Tree.t @ p
+        -> leaf:a leaf_callback @ p
+        -> node:a node_callback @ p
+        -> (a, tree) Acc.t @ p
       =
       fun tree ~leaf:{ on_leaf } ~node:{ on_node } ->
       match tree with

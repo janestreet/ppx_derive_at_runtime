@@ -3,7 +3,7 @@ open Ppxlib
 open Ast_builder.Default
 
 (** Copies source syntax to be used in generated code. Strips attributes and ensures all
-    locations are marked as "ghost". **)
+    locations are marked as "ghost". *)
 let copy =
   object
     inherit Ast_traverse.map
@@ -14,11 +14,11 @@ let copy =
 
 module Config = struct
   type t =
-    { module_id : Longident.t (** runtime module name **)
+    { module_id : Longident.t (** runtime module name *)
     ; name : string (** name used in [@@deriving] and derived value names *)
     ; attribute_custom : (core_type, expression) Attribute.t
-    (** [@foo.custom] attribute **)
-    ; attribute_core_type : (core_type, expression) Attribute.t (** [@foo] on types **)
+    (** [@foo.custom] attribute *)
+    ; attribute_core_type : (core_type, expression) Attribute.t (** [@foo] on types *)
     ; attribute_clause : (constructor_declaration, expression) Attribute.t
     (** \@foo on variant clauses *)
     ; attribute_field : (label_declaration, expression) Attribute.t
@@ -28,7 +28,7 @@ module Config = struct
     ; attribute_type_decl : (type_declaration, expression) Attribute.t
     (** [@@foo] on type declarations *)
     ; override_core_type : (core_type, expression) Attribute.t
-    (** [@foo.override] on types **)
+    (** [@foo.override] on types *)
     ; override_type_decl : (type_declaration, expression) Attribute.t
     (** [@@foo.override] on type declarations *)
     }
@@ -779,7 +779,7 @@ module Structure = struct
       (* Add a check that the runtime module satisfies the right signature. This should
          give a better type error by failing fast on missing or mistyped names, rather
          than waiting to discover such errors by expanding a type that happens to use the
-         offending features.*)
+         offending features. *)
       let name = { loc; txt = None } in
       let expr =
         pmod_constraint

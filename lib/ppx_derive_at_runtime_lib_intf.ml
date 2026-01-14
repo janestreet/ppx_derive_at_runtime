@@ -4,6 +4,12 @@
 
 open! Base
 
+module Lazy = struct
+  type 'a t = 'a Lazy.t
+
+  type%template 'a t = 'a Portable_lazy.t [@@mode portable]
+end
+
 (** Module types re-exported below. *)
 module Definitions = struct
   (** A simple set of definitions that can be used to derive values for a new type. Values
@@ -128,7 +134,7 @@ module Definitions = struct
   end
 
   (** Signature of a fold over a binary tree from [Type_without_fold], above. *)
-  module type Fold = sig
+  module type%template Fold = sig
     (** Binary tree types. *)
 
     type (_, _) node
@@ -160,14 +166,16 @@ module Definitions = struct
       -> node:'whole node_callback
       -> ('whole, 'tree) acc
   end
+  [@@modality p = (portable, nonportable)]
 
   (** Extends [Type_without_fold] with a functor providing [Fold]. *)
   module type Type = sig
     include Type_without_fold
 
     (** Produces a generic fold over [t], given a result type. *)
-    module Fold (Acc : T2) :
+    module%template.portable [@modality p] Fold (Acc : T2) :
       Fold
+      [@modality p]
       with type ('whole, 'tree) acc := ('whole, 'tree) Acc.t
        and type ('left, 'right) node := ('left, 'right) node
        and type ('whole, 'part) leaf := ('whole, 'part) leaf
@@ -273,7 +281,7 @@ module Definitions = struct
 
   (** Module type of the [Derive] submodule that each module for a derived value must
       provide. *)
-  module type Derive = sig
+  module type%template Derive = sig
     module Value : Value
     module Types : Types with module Value := Value
 
@@ -293,7 +301,7 @@ module Definitions = struct
     val poly_variant : 'a Types.Poly_variant.t -> 'a Value.t
 
     (** Derives values for recursive types, including their name. *)
-    val recursive : string -> 'a Value.t Lazy.t -> 'a Value.t
+    val recursive : string -> ('a Value.t Lazy.t[@mode p]) -> 'a Value.t
 
     (** Derives values for types annotated with [Value.attribute]. *)
     val with_attribute : 'a Value.t -> 'a Value.attribute -> 'a Value.t
@@ -301,13 +309,15 @@ module Definitions = struct
     (** Derives values from override attributes. *)
     val override : 'a Value.override -> 'a Value.t
   end
+  [@@modality p = (portable, nonportable)]
 
   (** Module type that a runtime module must satisfy for [ppx_derive_at_runtime]. *)
-  module type S = sig
+  module type%template S = sig
     type 'a t
 
-    module Derive : Derive with type 'a Value.t = 'a t
+    module Derive : Derive [@modality p] with type 'a Value.t = 'a t
   end
+  [@@mode p = (portable, nonportable)]
 
   (** Specialization of [S] for [Of_basic], where all attributes share a single type. *)
   module type S_with_basic_attribute = sig

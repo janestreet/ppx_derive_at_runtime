@@ -29,8 +29,8 @@ end
    like label names matter -- we cannot simply use the [Of_basic] functor. Instead, we use
    the [Types] and [Fold] functors from [Ppx_derive_at_runtime_lib].
 
-   When constructing a function using a [Fold] functor, we do the folding outside [fun]
-   or [function]. This way we traverse the type only once. *)
+   When constructing a function using a [Fold] functor, we do the folding outside [fun] or
+   [function]. This way we traverse the type only once. *)
 module Derive = struct
   open Ppx_derive_at_runtime_lib
 
@@ -49,8 +49,8 @@ module Derive = struct
   module Types = Types (Value)
   open Types
 
-  (* We derive [sexp_of] and [of_sexp] separately, and combine them into a [t] later.
-     This makes for easier to read code than trying to derive both at once. *)
+  (* We derive [sexp_of] and [of_sexp] separately, and combine them into a [t] later. This
+     makes for easier to read code than trying to derive both at once. *)
 
   (* How to derive [sexp_of]: *)
   module Sexp_of = struct

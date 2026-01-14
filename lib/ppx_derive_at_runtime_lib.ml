@@ -31,7 +31,7 @@ module Type (Spec : sig
 
   type _ t = T : ('a, _) Root.t -> 'a t
 
-  module Fold (Acc : T2) = struct
+  module%template.portable [@modality p] Fold (Acc : T2) = struct
     type 'a leaf_callback =
       { on_leaf : 'leaf 'name. ('a, 'leaf) leaf -> ('a, 'leaf) Acc.t }
     [@@unboxed]

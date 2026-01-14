@@ -3,7 +3,7 @@ open Ppxlib
 open Ast_builder.Default
 
 (** Copies source syntax to be used in generated code. Strips attributes and ensures all
-    locations are marked as "ghost". **)
+    locations are marked as "ghost". *)
 let copy =
   object
     inherit Ast_traverse.map
@@ -14,11 +14,11 @@ let copy =
 
 module Config = struct
   type t =
-    { module_id : Longident.t (** runtime module name **)
+    { module_id : Longident.t (** runtime module name *)
     ; name : string (** name used in [@@deriving] and derived value names *)
     ; attribute_custom : (core_type, expression) Attribute.t
-    (** [@foo.custom] attribute **)
-    ; attribute_core_type : (core_type, expression) Attribute.t (** [@foo] on types **)
+    (** [@foo.custom] attribute *)
+    ; attribute_core_type : (core_type, expression) Attribute.t (** [@foo] on types *)
     ; attribute_clause : (constructor_declaration, expression) Attribute.t
     (** \@foo on variant clauses *)
     ; attribute_field : (label_declaration, expression) Attribute.t
@@ -28,7 +28,7 @@ module Config = struct
     ; attribute_type_decl : (type_declaration, expression) Attribute.t
     (** [@@foo] on type declarations *)
     ; override_core_type : (core_type, expression) Attribute.t
-    (** [@foo.override] on types **)
+    (** [@foo.override] on types *)
     ; override_type_decl : (type_declaration, expression) Attribute.t
     (** [@@foo.override] on type declarations *)
     }
@@ -652,7 +652,7 @@ module Structure = struct
 
   (** Expansion for a type declaration. Takes a set of type names being defined mutually
       recursively with it. *)
-  let expand_type_declaration ~config ~murec td =
+  let expand_type_declaration ~config ~portable ~murec td =
     let loc = td.ptype_loc in
     let body =
       match Attribute.get (Config.override_type_decl config) td with
@@ -678,7 +678,21 @@ module Structure = struct
         eapply ~loc (Config.runtime_value config ~loc "with_attribute") [ body; expr ]
     in
     let body = wrap_runtime_error ~loc body in
-    let body = if Set.is_empty murec then body else pexp_lazy ~loc body in
+    let body =
+      match Set.is_empty murec, portable, td.ptype_params with
+      | true, _, _ -> body
+      | false, false, _ -> pexp_lazy ~loc body
+      | false, true, [] ->
+        [%expr
+          Portable_lazy.from_fun_fixed
+            (fun
+                [%p
+                  ppat_var
+                    ~loc
+                    (Located.mk ~loc (Config.name_of_lazy_value config td.ptype_name.txt))]
+              -> [%e body])]
+      | false, true, _ :: _ -> [%expr Portable_lazy.from_fun (fun () -> [%e body])]
+    in
     let params =
       List.map td.ptype_params ~f:(fun param ->
         Config.name_of_type_variable config (get_type_param_name param).txt
@@ -688,17 +702,17 @@ module Structure = struct
   ;;
 
   (** Expand straightforward nonrecursive definitions. *)
-  let expand_nonrecursive ~loc ~config tds =
+  let expand_nonrecursive ~loc ~config ~portable tds =
     let murec = Set.empty (module String) in
     List.map tds ~f:(fun td ->
       let pat = pvar ~loc (Config.name_of_value config td.ptype_name.txt) in
-      let expr = expand_type_declaration ~config ~murec td in
+      let expr = expand_type_declaration ~config ~portable ~murec td in
       value_binding ~loc ~pat ~expr)
     |> pstr_value_list ~loc Nonrecursive
   ;;
 
   (** Expand mutually recursive definitions via [lazy] indirection. *)
-  let expand_recursive ~loc ~config tds =
+  let expand_recursive ~loc ~config ~portable tds =
     let murec =
       List.map tds ~f:(fun td -> td.ptype_name.txt) |> Set.of_list (module String)
     in
@@ -708,11 +722,18 @@ module Structure = struct
       |> ppat_tuple_opt ~loc
       |> Option.value ~default:(punit ~loc)
     in
+    let rec_flag =
+      match
+        portable, List.exists tds ~f:(fun td -> not (List.is_empty td.ptype_params))
+      with
+      | false, _ | true, true -> Recursive
+      | true, false -> Nonrecursive
+    in
     let expr =
       let binds =
         List.map tds ~f:(fun td ->
           let pat = pvar ~loc (Config.name_of_lazy_value config td.ptype_name.txt) in
-          let expr = expand_type_declaration ~config ~murec td in
+          let expr = expand_type_declaration ~config ~portable ~murec td in
           value_binding ~loc ~pat ~expr)
       in
       List.map tds ~f:(fun td ->
@@ -723,37 +744,60 @@ module Structure = struct
             (evar ~loc (Config.name_of_lazy_value config td.ptype_name.txt))
             (List.map params ~f:(fun name -> evar ~loc:name.loc name.txt))
         ]
-        |> eapply ~loc [%expr Stdlib.Lazy.force]
+        |> eapply
+             ~loc
+             (match portable with
+              | false -> [%expr Stdlib.Lazy.force]
+              | true -> [%expr Portable_lazy.force])
         |> eabstract ~loc (List.map params ~f:(fun name -> pvar ~loc:name.loc name.txt)))
       |> pexp_tuple_opt ~loc
       |> Option.value ~default:(eunit ~loc)
-      |> pexp_let ~loc Recursive binds
+      |> pexp_let ~loc rec_flag binds
     in
     [ value_binding ~loc ~pat ~expr ] |> pstr_value_list ~loc Nonrecursive
   ;;
 
+  let wrap_mode_module_type ~loc ~portable module_type =
+    match portable with
+    | false -> module_type
+    | true ->
+      let m = pexp_ident (Loc.make ~loc (Lident "portable")) ~loc in
+      let mode_attr =
+        { attr_name = Loc.make ~loc "mode"
+        ; attr_loc = loc
+        ; attr_payload = PStr [%str [%e m]]
+        }
+      in
+      { module_type with pmty_attributes = module_type.pmty_attributes @ [ mode_attr ] }
+  ;;
+
   (** Derive code from a set of type definitions. *)
-  let expand ~config ~loc ~path:_ (rec_flag, tds) : structure =
+  let expand ~config ~portable ~loc ~path:_ (rec_flag, tds) : structure =
     let tds = List.map tds ~f:name_type_params_in_td in
     let rec_flag = really_recursive rec_flag tds in
     let signature_check =
       (* Add a check that the runtime module satisfies the right signature. This should
          give a better type error by failing fast on missing or mistyped names, rather
          than waiting to discover such errors by expanding a type that happens to use the
-         offending features.*)
+         offending features. *)
       let name = { loc; txt = None } in
       let expr =
         pmod_constraint
           ~loc
           (pmod_ident ~loc { loc; txt = Config.module_id config })
-          (pmty_ident ~loc { loc; txt = Ldot (Lident "Ppx_derive_at_runtime_lib", "S") })
+          (wrap_mode_module_type
+             ~loc
+             ~portable
+             (pmty_ident
+                ~loc
+                { loc; txt = Ldot (Lident "Ppx_derive_at_runtime_lib", "S") }))
       in
       pstr_module ~loc (module_binding ~loc ~name ~expr)
     in
     let definitions =
       match rec_flag with
-      | Nonrecursive -> expand_nonrecursive ~loc ~config tds
-      | Recursive -> expand_recursive ~loc ~config tds
+      | Nonrecursive -> expand_nonrecursive ~loc ~config ~portable tds
+      | Recursive -> expand_recursive ~loc ~config ~portable tds
     in
     signature_check :: definitions
   ;;
@@ -773,10 +817,12 @@ module Structure = struct
 end
 
 (** Create a new [@@deriving] for a runtime module. *)
-let register_fully_qualified_runtime_module here module_path =
+let register_fully_qualified_runtime_module ?(portable = false) here module_path =
   let config = Config.create ~here ~module_path in
   let sig_type_decl = Deriving.Generator.make_noarg (Signature.expand ~config) in
-  let str_type_decl = Deriving.Generator.make_noarg (Structure.expand ~config) in
+  let str_type_decl =
+    Deriving.Generator.make_noarg (Structure.expand ~portable ~config)
+  in
   let extension = Structure.extension ~config in
   Driver.register_transformation
     (Config.name_of_deriving config)

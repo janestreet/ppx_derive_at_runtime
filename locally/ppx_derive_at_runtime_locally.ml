@@ -5,7 +5,7 @@ let register_via_command_line here module_name =
   |> Ppxlib.Deriving.ignore
 ;;
 
-(** Register the command-line flag. **)
+(** Register the command-line flag. *)
 let () =
   Ppxlib.Driver.add_arg
     "-derive-from-module"

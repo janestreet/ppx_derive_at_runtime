@@ -5,4 +5,4 @@
  (libraries ppx_derive_at_runtime ppxlib)
  (ppx_runtime_libraries ppx_derive_at_runtime.example)
  (preprocess
-  (pps ppx_jane)))
+  (pps ppx_jane -compare-require-explicit-locality)))

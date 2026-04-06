@@ -3,4 +3,4 @@
  (public_name ppx_derive_at_runtime.example)
  (libraries base ppx_derive_at_runtime_lib)
  (preprocess
-  (pps ppx_jane)))
+  (pps ppx_jane -compare-require-explicit-locality)))
